@@ -9,7 +9,7 @@ namespace PerformanceScope.Tests
         [InlineData(0.5f, 1440, 720)]
         [InlineData(0.7f, 1080, 756)]
         [InlineData(1.0f, 1080, 1080)]
-        [InlineData(0.666f, 1440, 959)] // 959.04 → 四舍五入 959
+        [InlineData(0.666f, 1440, 959)] // 959.04 → 四舍五入 959 · 959.04 → rounded to 959
         public void ScreenHeightRatio_按屏幕高度换算(float ratio, int screenHeight, int expected)
         {
             int actual = ResolutionMath.Resolve(OpticResolutionMode.ScreenHeightRatio, screenHeight, ratio, 0);

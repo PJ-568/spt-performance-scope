@@ -1,4 +1,7 @@
-name: 测试
+# ── 测试 · Tests ──
+# 纯逻辑层无游戏依赖，可在公共 runner 直接测试
+# The pure-logic layer has no game dependency and can be tested on a public runner
+name: 测试 · Tests
 
 on:
   push:
@@ -14,6 +17,6 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "10.0.x"
-      # 纯逻辑层无游戏依赖，可在 CI 直接测试
-      - name: 运行单元测试
+      # 运行单元测试 / Run unit tests
+      - name: 运行单元测试 · Run unit tests
         run: dotnet test tests/PerformanceScope.Tests/PerformanceScope.Tests.csproj -c Release

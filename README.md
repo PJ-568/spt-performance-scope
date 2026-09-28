@@ -1,3 +1,5 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 # PerformanceScope
 
 > 调整《逃离塔科夫》光学瞄具**镜内放大（PiP）相机**渲染分辨率的 SPT 客户端插件。
@@ -40,13 +42,13 @@
 
 | 节 | 键 | 默认值 | 说明 |
 | --- | --- | --- | --- |
-| 1. 通用 | 启用模组 | `true` | 总开关，关闭后恢复游戏默认分辨率。 |
-| 1. 通用 | 启用日志 | `false` | 输出常规/诊断/警告日志（错误日志始终输出）。 |
-| 1. 通用 | 详细日志 | `false` | 更详细的诊断信息。 |
-| 2. 镜内分辨率 | 取值方式 | `游戏默认` | 游戏默认 / 屏幕高度比例 / 绝对像素。 |
-| 2. 镜内分辨率 | 屏幕高度比例 | `0.5` | 镜内边长 = round(屏幕高度 × 该值)。 |
-| 2. 镜内分辨率 | 绝对像素 | `1024` | 镜内方形 RenderTexture 的边长。 |
-| 2. 镜内分辨率 | 瞄准中立即应用 | `true` | 关闭时，瞄准期间的改动推迟到退出镜内后应用。 |
+| 1. 通用 · General | 启用模组 \| Enable Mod | `true` | 总开关，关闭后恢复游戏默认分辨率。 |
+| 1. 通用 · General | 启用日志 \| Enable Logging | `false` | 输出常规/诊断/警告日志（错误日志始终输出）。 |
+| 1. 通用 · General | 详细日志 \| Verbose Logging | `false` | 更详细的诊断信息。 |
+| 2. 镜内分辨率 · Scope Resolution | 取值方式 \| Resolution Mode | `游戏默认` | 游戏默认 / 屏幕高度比例 / 绝对像素。 |
+| 2. 镜内分辨率 · Scope Resolution | 屏幕高度比例 \| Screen Height Ratio | `0.5` | 镜内边长 = round(屏幕高度 × 该值)。 |
+| 2. 镜内分辨率 · Scope Resolution | 绝对像素 \| Absolute Pixels | `1024` | 镜内方形 RenderTexture 的边长。 |
+| 2. 镜内分辨率 · Scope Resolution | 瞄准中立即应用 \| Apply While Scoped | `true` | 关闭时，瞄准期间的改动推迟到退出镜内后应用。 |
 
 > 默认取值方式为「游戏默认」，即安装后不改变游戏行为；请显式选择模式。
 > 注意：`屏幕高度比例` 在 4K（2160p）下 `0.7` 会得到 1512，**高于**游戏默认 1024，反而增加负载。
@@ -131,3 +133,140 @@ scripts/package.sh
 ## 许可证
 
 （待定）
+
+===============================================================
+
+# PerformanceScope
+
+> An SPT client plugin that adjusts the render resolution of the **in-scope (PiP) camera** for magnified optics in Escape from Tarkov.
+
+Picture-in-picture (PiP) is the most GPU-hungry part of a magnified optic: the game creates a dedicated camera and renders an `N×N` square RenderTexture (default `1024²`) onto the lens. This plugin makes that `N` configurable, so you can trade image quality for frame rate.
+
+## How it works
+
+Client decompilation (EFT 0.16 / SPT 4.1.x) confirms:
+
+- `EFT.CameraControl.OpticCameraManager` has `public int OpticFinalResolution = 1024;`. Its `SetResolution(int)` destroys and recreates an `N×N` square `RenderTexture` (`name = "SSAAOpticCurrent"`), assigns it to `Camera.targetTexture`, and sets the global `Shader.SetGlobalTexture("_CamTex")`.
+- In the current version this value is **not exposed by any setting**; its only call site is `Init()`.
+- Volumetric lighting (`VolumetricLightRenderer`), grass motion vectors (`GPUInstancer`), distant shadows (`DistantShadow`) and MBOIT (`WindowsManager`) all detect the size change on the next frame and rebuild automatically — no plugin intervention needed.
+
+The plugin therefore uses a Harmony **prefix** to override the `resolution` argument of `SetResolution`, so the game's own `Init()` creates the RT at the target size directly, avoiding a double-rebuild flicker.
+
+The scoped image is finally upscaled to the screen together with the whole frame by the main camera's `SSAA`/`SSAAImpl` — **this plugin does not change any upscaler (DLSS/FSR) setting**; it only adjusts the in-scope source resolution.
+
+## Supported versions
+
+- SPT `4.1.x` (EFT client `0.16`).
+- The client plugin depends on specific types and methods in `Assembly-CSharp.dll`, so it may break across versions.
+
+## Installation
+
+1. Build or download `PerformanceScope-v{version}.zip`.
+2. Extract it into the game root so the dll lands at
+   `BepInEx/plugins/PerformanceScope/PerformanceScope.dll`.
+3. Launch the game.
+
+## Tuning
+
+Install [BepInEx ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager), then press **F1** in game (rebindable in its config) and adjust the `PerformanceScope` sections.
+**This plugin ships no custom UI or hotkeys**; changes apply immediately in game (synced every frame by the service layer).
+
+## Configuration
+
+Config file: `BepInEx/config/com.pj568.performancescope.cfg` (or edit through ConfigurationManager).
+
+| Section | Key | Default | Notes |
+| --- | --- | --- | --- |
+| 1. 通用 · General | 启用模组 \| Enable Mod | `true` | Master switch; when off the game default is restored. |
+| 1. 通用 · General | 启用日志 \| Enable Logging | `false` | Writes info/verbose/warning logs (errors are always logged). |
+| 1. 通用 · General | 详细日志 \| Verbose Logging | `false` | More detailed diagnostics. |
+| 2. 镜内分辨率 · Scope Resolution | 取值方式 \| Resolution Mode | `游戏默认` | Game default / screen-height ratio / absolute pixels. |
+| 2. 镜内分辨率 · Scope Resolution | 屏幕高度比例 \| Screen Height Ratio | `0.5` | Scope edge = round(screen height × value). |
+| 2. 镜内分辨率 · Scope Resolution | 绝对像素 \| Absolute Pixels | `1024` | Edge length of the square scope RenderTexture. |
+| 2. 镜内分辨率 · Scope Resolution | 瞄准中立即应用 \| Apply While Scoped | `true` | When off, changes made while scoped are deferred until you unscope. |
+
+> The default mode is "game default", so installing the plugin does not change anything until you pick a mode.
+> Note: with `屏幕高度比例`, `0.7` on a 4K (2160p) display yields 1512, which is **higher** than the game default 1024 and therefore costs more.
+
+## Build
+
+Prerequisite: a local SPT client install (the client assemblies are proprietary and not distributed with this repository).
+
+```shellscript
+# Point at the game root (falls back to the local Lutris prefix by default)
+export SPT_DIR="/path/to/Escape from Tarkov"
+dotnet build src/PerformanceScope.Plugin/PerformanceScope.Plugin.csproj -c Release
+```
+
+A Release build copies the dll to `$SPT_DIR/BepInEx/plugins/PerformanceScope/` automatically;
+disable with `-p:DeployToGame=false`.
+
+## Test
+
+The pure-logic layer (resolution math and apply decisions) has no game dependency and can be tested directly:
+
+```shellscript
+dotnet test tests/PerformanceScope.Tests/PerformanceScope.Tests.csproj
+```
+
+## Packaging and release
+
+```shellscript
+# Package only
+scripts/package.sh
+# Output: artifacts/PerformanceScope-v{version}.zip
+
+# One-command release: build → package → tag → push → create GitHub Release
+scripts/release.sh
+# Dry run (builds/packages and prints the commands; requires a clean work tree)
+scripts/release.sh --dry-run
+```
+
+Release prerequisites: GitHub CLI (`gh`) installed and logged in, and a configured `remote origin`.
+`release.sh` verifies a clean work tree and a fresh tag, then creates a Release with the zip attached.
+
+## Deploy (local)
+
+```shellscript
+scripts/package.sh
+# Extract the zip into the game root, or rely on the automatic copy of Release builds
+```
+
+On startup `BepInEx/LogOutput.log` should show:
+
+```
+[Info   :PerformanceScope] PerformanceScope 已加载（在 ConfigurationManager 菜单中调参）
+[Info   :PerformanceScope] 镜内分辨率 1024 → 720
+```
+
+## Verification
+
+1. Enable "启用日志 | Enable Logging" in ConfigurationManager.
+2. Enter a raid and aim down sights through a magnified optic.
+3. Open ConfigurationManager (default F1) and switch "取值方式 | Resolution Mode" to "屏幕高度比例" or "绝对像素".
+4. Watch `BepInEx/LogOutput.log` for `镜内分辨率 1024 → …`, and check the scoped image quality / frame rate.
+5. Turn off "瞄准中立即应用 | Apply While Scoped", change the value while scoped, and confirm the change only applies after you unscope.
+
+## Interaction with other mods
+
+- **PiP-Disabler** (`com.fiodor.pipdisabler`): it is a **postfix gate** on `SetResolution` (it neither rewrites the argument nor the field), so it coexists with this plugin; suppressed scoped rendering does not trigger this plugin's conflict retry.
+- **Fontaine's FOV Fix / Amands's Graphics**: they patch targets (`OpticComponentUpdater`, etc.) that do not overlap this plugin, so there is no direct conflict.
+- **DERP (Dynamic External Resolution Patch)**: it changes the **main camera / global** resolution and upscaler mode, a different mechanism from this plugin (in-scope square RT size). Both can be used together, but note that their effects stack.
+- **DLSS / FSR**: this plugin **does not switch upscaler modes**; however, changing the scoped RT size while an upscaler is active may cause a one-frame flicker — turn off "瞄准中立即应用" to avoid it. SPT officially documents a black flicker when switching modes under DLSS/FSR.
+
+> Every game symbol used here (`OpticCameraManager.SetResolution`, `OpticFinalResolution`, `_CamTex`, `SSAAOpticCurrent`, …) was taken directly from decompiling the **SPT 4.1.x `Assembly-CSharp.dll` installed on this machine**, not from public sources.
+
+## Known limitations and risks
+
+- **No independent in-scope upscaler setting**: the game has a single `SSAA`/`SSAAImpl` on the main camera and the scoped image is part of it; a truly independent in-scope FSR/DLSS would require attaching a second component, which this plugin does not do.
+- **Changing resolution while scoped may flash for one frame** because the RenderTexture is destroyed and recreated; turn off "瞄准中立即应用" to avoid it.
+- **Texture aliasing becomes more visible at low in-scope resolutions**: the scope camera's mipmap bias is only set once in `Init()`, and the plugin does not compensate.
+- **Possible conflict with other mods that patch `SetResolution`**: if a third-party prefix rewrites the same argument, the plugin detects the target not taking effect and pauses retries until you change the target, avoiding per-frame RenderTexture rebuilds.
+- **Version sensitive**: it depends on specific types and methods and may break after an EFT update.
+- **CI limitation**: a client plugin must reference proprietary assemblies, which public runners cannot build, so the repository keeps only `test.yml` (pure-logic unit tests); release packages are produced locally with `scripts/release.sh`.
+
+## License
+
+(TBD)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
