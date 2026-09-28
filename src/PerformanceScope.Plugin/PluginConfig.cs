@@ -15,6 +15,12 @@ namespace PerformanceScope
         private const string SectionGeneral = "1. 通用 · General";
         private const string SectionResolution = "2. 镜内分辨率 · Scope Resolution";
 
+        /// <summary>
+        /// 底层配置文件，供服务层订阅 <c>SettingChanged</c> 事件。
+        /// The underlying config file, used by the service layer to subscribe to <c>SettingChanged</c>.
+        /// </summary>
+        public static ConfigFile File { get; private set; }
+
         public static ConfigEntry<bool> EnableMod { get; private set; }
 
         public static ConfigEntry<bool> EnableLogging { get; private set; }
@@ -35,6 +41,8 @@ namespace PerformanceScope
         /// </summary>
         public static void Init(ConfigFile config)
         {
+            File = config;
+
             EnableMod = config.Bind(
                 SectionGeneral,
                 "启用模组 | Enable Mod",

@@ -12,7 +12,7 @@
 - **无法独立设置镜内超分档**：全游戏只有一套挂在主相机上的 `SSAA`/`SSAAImpl`，镜内画面是其一部分；独立的镜内 FSR/DLSS 需要另挂一套组件，本插件不做。
 - **瞄准中改分辨率可能有一帧闪烁**：因为会销毁并重建 RenderTexture；可将「瞄准中立即应用」关闭以规避。
 - **镜内低分辨率下纹理锯齿会更明显**：镜内相机的 mipmap bias 只在 `Init()` 时设置一次，插件不做补偿。
-- **与其它改 `SetResolution` 的模组可能冲突**：若第三方 prefix 改写同一入参，插件检测到目标未生效后会暂停重试直至你更改目标值，避免每帧重建 RenderTexture。
+- **与其它改 `SetResolution` 的模组可能冲突**：若第三方 prefix 改写同一入参，插件检测到目标未生效后会暂停重试直至你更改目标值，避免反复重建 RenderTexture。
 - **版本敏感**：依赖具体类型与方法，EFT 更新后可能失效。
 - **CI 限制**：客户端插件必须引用专有程序集，公共 runner 无法构建，故仓库只保留 `test.yml`（跑纯逻辑单测）；发行包用 `scripts/release.sh` 本地一键发布。
 
@@ -36,7 +36,7 @@
 - **No independent in-scope upscaler setting**: the game has a single `SSAA`/`SSAAImpl` on the main camera and the scoped image is part of it; a truly independent in-scope FSR/DLSS would require attaching a second component, which this plugin does not do.
 - **Changing resolution while scoped may flash for one frame** because the RenderTexture is destroyed and recreated; turn off "瞄准中立即应用" to avoid it.
 - **Texture aliasing becomes more visible at low in-scope resolutions**: the scope camera's mipmap bias is only set once in `Init()`, and the plugin does not compensate.
-- **Possible conflict with other mods that patch `SetResolution`**: if a third-party prefix rewrites the same argument, the plugin detects the target not taking effect and pauses retries until you change the target, avoiding per-frame RenderTexture rebuilds.
+- **Possible conflict with other mods that patch `SetResolution`**: if a third-party prefix rewrites the same argument, the plugin detects the target not taking effect and pauses retries until you change the target, avoiding repeated RenderTexture rebuilds.
 - **Version sensitive**: it depends on specific types and methods and may break after an EFT update.
 - **CI limitation**: a client plugin must reference proprietary assemblies, which public runners cannot build, so the repository keeps only `test.yml` (pure-logic unit tests); release packages are produced locally with `scripts/release.sh`.
 

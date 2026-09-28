@@ -1,4 +1,5 @@
 using System;
+using BepInEx.Configuration;
 using EFT.CameraControl;
 using PerformanceScope.Core;
 using UnityEngine;
@@ -6,49 +7,29 @@ using UnityEngine;
 namespace PerformanceScope
 {
     /// <summary>
-    /// 镜内 PiP 分辨率的决策与应用。每帧由插件调用 <see cref="Tick"/>，
-    /// 根据配置与当前游戏状态决定何时调用 <see cref="OpticCameraManager.SetResolution"/>。
-    /// 普通类，由插件在 Awake 中创建并注册到 <see cref="Instance"/>。
-    /// Decision and application of the in-scope PiP resolution. The plugin calls <see cref="Tick"/> every frame,
-    /// which decides when to call <see cref="OpticCameraManager.SetResolution"/> based on config and game state.
-    /// A plain class, created by the plugin in Awake and assigned to <see cref="Instance"/>.
+    /// 镜内 PiP 分辨率的决策与应用，完全事件驱动，不做任何每帧轮询：
+    /// 配置变更来自 ConfigFile.SettingChanged，瞄具退出来自 OpticCameraManager.OnOpticDisabled，
+    /// 战局开始则由 SetResolution 的 prefix 直接覆盖（无需运行时补偿）。
+    /// Decision and application of the in-scope PiP resolution, fully event-driven with no per-frame polling:
+    /// config changes come from ConfigFile.SettingChanged, scope exit from OpticCameraManager.OnOpticDisabled,
+    /// and raid start is covered directly by the SetResolution prefix.
     /// </summary>
     internal sealed class OpticResolutionService
     {
-        private bool _loggedNoCamera;
+        private OpticCameraManager _hookedManager;
 
-        private int _pendingTarget = ResolutionMath.GameDefaultResolution;
-
-        private int _conflictTarget = int.MinValue;
+        private int _failedTarget = int.MinValue;
 
         /// <summary>
         /// 当前服务实例；插件未加载时为 null，补丁据此透传原值。
-        /// Current service instance; null when the plugin is not loaded, in which case patches pass the original value through.
+        /// Current service instance; null when the plugin is not loaded, in which case the patch passes the original value through.
         /// </summary>
         public static OpticResolutionService Instance { get; set; }
 
         /// <summary>
-        /// 最近一次解析出的目标边长，供叠加显示。
-        /// Most recently resolved target edge length, used for overlay display.
-        /// </summary>
-        public int LastTarget { get; private set; } = ResolutionMath.GameDefaultResolution;
-
-        /// <summary>
-        /// 是否有因瞄准中而推迟应用的目标。
-        /// Whether a target is currently deferred because the player is scoped.
-        /// </summary>
-        public bool PendingApply { get; private set; }
-
-        /// <summary>
-        /// 是否因第三方改写导致目标无法生效而暂停重试。
-        /// Whether retries are paused because a third-party rewrite kept the target from taking effect.
-        /// </summary>
-        public bool ConflictLocked { get; private set; }
-
-        /// <summary>
         /// 计算当前配置对应的目标边长。模组关闭时返回游戏默认值，
         /// 从而让游戏恢复其原生 1024。
-        /// Computes the target edge length for the current config. Returns the game default when the mod is off,
+        /// Compute the target edge length for the current config. Returns the game default when the mod is off,
         /// so the game falls back to its native 1024.
         /// </summary>
         public int ComputeTarget()
@@ -66,110 +47,155 @@ namespace PerformanceScope
         }
 
         /// <summary>
-        /// 每帧调用：在相机就绪时把配置分辨率同步给游戏。
-        /// Called every frame: syncs the configured resolution to the game once the camera is ready.
+        /// 订阅配置变更（ConfigFile 级事件）。
+        /// Subscribe to config changes (ConfigFile-level event).
         /// </summary>
-        public void Tick()
+        public void HookSettings()
         {
-            OpticCameraManager ocm = GetOpticCameraManager();
-            if (ocm == null || ocm.Camera == null)
+            if (PluginConfig.File == null)
             {
-                if (!_loggedNoCamera)
-                {
-                    _loggedNoCamera = true;
-                    Log.Verbose("镜内相机尚未就绪，暂不应用 | Optic camera not ready, skipping.");
-                }
-
                 return;
             }
 
-            _loggedNoCamera = false;
+            PluginConfig.File.SettingChanged += OnSettingChanged;
+        }
 
-            int target = ComputeTarget();
-            LastTarget = target;
-
-            if (ConflictLocked)
+        /// <summary>
+        /// 取消全部订阅（配置与镜内管理器）。
+        /// Remove every subscription (config and optic camera manager).
+        /// </summary>
+        public void Unhook()
+        {
+            if (PluginConfig.File != null)
             {
-                // 仅在目标变化（例如玩家改了配置）时解除锁定，避免每帧重建。
-                // Unlock only when the target changes (e.g. the player edits config) to avoid per-frame rebuilds.
-                if (target == _conflictTarget)
-                {
-                    return;
-                }
-
-                ConflictLocked = false;
+                PluginConfig.File.SettingChanged -= OnSettingChanged;
             }
 
-            OpticApplyAction action = OpticResolutionDecision.Decide(
-                ocm.OpticFinalResolution,
-                target,
-                ocm.IsAnyOpticCameraRendering,
-                PluginConfig.ApplyWhileScoped?.Value == true);
-
-            switch (action)
+            if (_hookedManager != null)
             {
-                case OpticApplyAction.Apply:
-                    Apply(ocm, target);
-                    break;
+                try
+                {
+                    _hookedManager.OnOpticDisabled -= OnOpticDisabled;
+                }
+                catch (Exception e)
+                {
+                    Log.Error("解除镜内事件订阅失败：" + e + " | Failed to unsubscribe optic events: " + e);
+                }
 
-                case OpticApplyAction.Defer:
-                    if (!PendingApply || _pendingTarget != target)
-                    {
-                        _pendingTarget = target;
-                        PendingApply = true;
-                        Log.Info($"镜内瞄准中，推迟应用分辨率 | scoped, deferring resolution {ocm.OpticFinalResolution} → {target}");
-                    }
-
-                    break;
-
-                default:
-                    PendingApply = false;
-                    break;
+                _hookedManager = null;
             }
         }
 
         /// <summary>
-        /// 安全地调用游戏接口重建镜内 RenderTexture。
-        /// Safely calls the game API to rebuild the scope RenderTexture.
+        /// 由 SetResolution 的 prefix 在游戏创建镜内管理器时调用，按实例幂等地订阅其退出事件。
+        /// Called by the SetResolution prefix when the game creates the optic camera manager; subscribes
+        /// (idempotently per instance) to its scope-exit event.
         /// </summary>
-        private void Apply(OpticCameraManager ocm, int target)
+        public void OnOpticCameraManagerReady(OpticCameraManager manager)
         {
-            int old = ocm.OpticFinalResolution;
+            if (manager == null || ReferenceEquals(_hookedManager, manager))
+            {
+                return;
+            }
+
+            if (_hookedManager != null)
+            {
+                _hookedManager.OnOpticDisabled -= OnOpticDisabled;
+                _hookedManager = null;
+            }
+
+            _hookedManager = manager;
+            _hookedManager.OnOpticDisabled += OnOpticDisabled;
+        }
+
+        /// <summary>
+        /// 在安全时机把配置分辨率同步给游戏；不满足条件时留给后续事件处理。
+        /// Sync the configured resolution to the game at a safe moment; otherwise leave it to later events.
+        /// </summary>
+        public void TryApply()
+        {
+            OpticCameraManager manager = GetOpticCameraManager();
+            if (manager == null || manager.Camera == null)
+            {
+                // 未进入战局：战局开始时 Init() 的 prefix 会直接按目标分辨率建 RT。
+                // Not in a raid yet: the prefix on Init() will create the RT at the target size.
+                Log.Verbose("镜内相机尚未就绪，交由战局初始化处理。 | Optic camera not ready; deferring to raid init.");
+                return;
+            }
+
+            int target = ComputeTarget();
+            if (target == _failedTarget)
+            {
+                return;
+            }
+
+            OpticApplyAction action = OpticResolutionDecision.Decide(
+                manager.OpticFinalResolution,
+                target,
+                manager.IsAnyOpticCameraRendering,
+                PluginConfig.ApplyWhileScoped?.Value == true);
+
+            if (action != OpticApplyAction.Apply)
+            {
+                // Defer：瞄准中且配置禁止立即应用，等 OnOpticDisabled；None：无需动作。
+                // Defer: scoped and immediate apply is disabled, wait for OnOpticDisabled. None: nothing to do.
+                return;
+            }
+
+            Apply(manager, target);
+        }
+
+        private void OnSettingChanged(object sender, SettingChangedEventArgs e)
+        {
+            TryApply();
+        }
+
+        private void OnOpticDisabled()
+        {
+            TryApply();
+        }
+
+        /// <summary>
+        /// 安全地调用游戏接口重建镜内 RenderTexture。
+        /// Rebuild the in-scope RenderTexture through the game API, safely.
+        /// </summary>
+        private void Apply(OpticCameraManager manager, int target)
+        {
+            int old = manager.OpticFinalResolution;
             if (old == target)
             {
-                PendingApply = false;
-                LastTarget = target;
+                _failedTarget = int.MinValue;
                 return;
             }
 
             try
             {
-                ocm.SetResolution(target);
+                manager.SetResolution(target);
             }
             catch (Exception e)
             {
-                Log.Error($"设置镜内分辨率失败（{old} → {target}） | Failed to set scope resolution: {e}");
+                Log.Error($"设置镜内分辨率失败（{old} → {target}）：{e} | Failed to set scope resolution ({old} → {target}): {e}");
                 return;
             }
 
-            PendingApply = false;
-            LastTarget = target;
-            Log.Info($"镜内分辨率 | scope resolution {old} → {target}");
+            Log.Info($"镜内分辨率 {old} → {target} | Scope resolution {old} → {target}");
 
-            if (ocm.OpticFinalResolution != target)
+            if (manager.OpticFinalResolution != target)
             {
-                // 第三方 prefix/postfix 可能改写了结果；锁定以避免每帧重建 RenderTexture。
-                // A third-party prefix/postfix may have rewritten the result; lock to avoid rebuilding the RenderTexture every frame.
-                ConflictLocked = true;
-                _conflictTarget = target;
-                Log.Warn($"镜内分辨率未生效（仍为 {ocm.OpticFinalResolution}），可能存在冲突模组；已暂停重试直至目标变化 | Scope resolution did not take effect (still {ocm.OpticFinalResolution}); a conflicting mod may exist. Retrying paused until target changes.");
+                // 第三方 prefix/postfix 可能改写了结果；锁定目标以避免反复重建 RenderTexture。
+                // A third-party prefix/postfix may have rewritten the result; lock the target to avoid repeated rebuilds.
+                _failedTarget = target;
+                Log.Warn($"镜内分辨率未生效（仍为 {manager.OpticFinalResolution}），可能存在冲突模组；已暂停重试直至目标变化。 | Scope resolution did not stick (still {manager.OpticFinalResolution}); possible mod conflict, retries paused until the target changes.");
+                return;
             }
+
+            _failedTarget = int.MinValue;
         }
 
         private static OpticCameraManager GetOpticCameraManager()
         {
-            // 读取静态字段而非 Instance 属性：避免在菜单等场景中触发 CameraManager 的懒创建。
-            // Read the static field instead of the Instance property to avoid triggering CameraManager's lazy creation in menus.
+            // 读取静态字段而非 Instance 属性：避免触发 CameraManager 的懒创建。
+            // Read the static field rather than the Instance property to avoid forcing lazy creation.
             CameraManager manager = CameraManager.instance;
             return manager == null ? null : manager.OpticCameraManager;
         }

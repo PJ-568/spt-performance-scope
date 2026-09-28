@@ -7,10 +7,10 @@ namespace PerformanceScope
     /// <summary>
     /// 插件入口：初始化配置、日志、Harmony 补丁与分辨率服务。
     /// 所有调参通过 BepInEx ConfigurationManager 在游戏内完成（SPT 中默认 F12，可在其配置中改键），
-    /// 服务层每帧读取配置并即时生效；本插件不提供自定义 UI 或热键。
+    /// 服务层事件驱动地响应配置变更并即时生效；本插件不提供自定义 UI 或热键。
     /// Plugin entry point: initializes config, logging, Harmony patches and the resolution service.
     /// All tweaking is done in-game via BepInEx ConfigurationManager (F12 by default in SPT; rebindable in its config);
-    /// the service reads config every frame and applies it immediately. This plugin offers no custom UI or hotkey.
+    /// the service reacts to config changes in an event-driven way and applies them immediately. This plugin offers no custom UI or hotkey.
     /// </summary>
     [BepInPlugin("com.pj568.performancescope", "PerformanceScope", "0.1.0")]
     public class PerformanceScopePlugin : BaseUnityPlugin
@@ -25,21 +25,19 @@ namespace PerformanceScope
             PluginConfig.Init(Config);
             ApplyHarmonyPatches();
 
-            OpticResolutionService.Instance = new OpticResolutionService();
+            // 事件驱动：创建服务并订阅配置变更，不再每帧轮询。
+            // Event-driven: create the service and subscribe to config changes; no per-frame polling.
+            OpticResolutionService service = new OpticResolutionService();
+            OpticResolutionService.Instance = service;
+            service.HookSettings();
 
             Log.Info("PerformanceScope 已加载 | loaded（在 ConfigurationManager 菜单中调参 / configure via ConfigurationManager）");
         }
 
-        private void Update()
-        {
-            // 每帧同步：ConfigurationManager 里改动配置后立即生效，并处理瞄准中的延迟应用。
-            // Per-frame sync: apply ConfigurationManager changes immediately and handle
-            // deferred in-scope applies.
-            OpticResolutionService.Instance?.Tick();
-        }
-
         private void OnDestroy()
         {
+            OpticResolutionService.Instance?.Unhook();
+
             if (_harmony == null)
             {
                 return;

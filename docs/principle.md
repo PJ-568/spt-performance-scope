@@ -62,6 +62,16 @@
 
 因此本插件用 Harmony **prefix** 直接覆盖 `SetResolution` 的入参，让游戏自身的 `Init()` 一次性就建到目标分辨率，避免二次重建。
 
+## 应用时机（事件驱动）
+
+插件不做任何每帧轮询，只在三类时机工作：
+
+1. **战局开始**：游戏的 `Init()` 调用 `SetResolution`，prefix 直接把入参改成目标值，RT 一次建成，无需运行时补偿。
+2. **配置变更**：订阅 `ConfigFile.SettingChanged`；当前未瞄准则立即应用，正在瞄准且「瞄准中立即应用」为真时也立即应用。
+3. **退出镜内**：订阅 `OpticCameraManager.OnOpticDisabled`（在 `CurrentOpticSight` 置空且镜内相机停用之后触发，是安全的重建窗口），在此补齐被推迟的改动。
+
+订阅按 `OpticCameraManager` 实例幂等：战局切换导致管理器重建时，prefix 会把新实例交给服务并退订旧实例。
+
 ## 尺寸消费方自动重建
 
 镜内尺寸变化不需要插件干预。以下子系统会在后续帧自检并重建：
@@ -146,6 +156,16 @@ Picture-in-picture (PiP) creates a dedicated camera for the optic: `EFT.CameraCo
 The only game-side call site of `SetResolution` is `Init()` (line 195), and it always passes `OpticFinalResolution`. If the result were rewritten in a postfix, the game would first build a RenderTexture at the default `1024` and then have it rebuilt by the plugin, causing a visible flicker.
 
 The plugin therefore uses a Harmony **prefix** to override the argument of `SetResolution`, so the game's own `Init()` creates the RT at the target resolution directly, avoiding a double rebuild.
+
+## When It Applies (Event-Driven)
+
+The plugin does no per-frame polling; it only acts on three triggers:
+
+1. **Raid start**: the game's `Init()` calls `SetResolution`, and the prefix replaces the argument with the target value, so the RT is created once at the right size with no runtime compensation.
+2. **Config change**: it subscribes to `ConfigFile.SettingChanged`; the change applies immediately when not scoped, and also when scoped if "Apply While Scoped" is on.
+3. **Scope exit**: it subscribes to `OpticCameraManager.OnOpticDisabled` (fired after `CurrentOpticSight` is cleared and the optic camera is deactivated — a safe rebuild window), where deferred changes are applied.
+
+Subscriptions are idempotent per `OpticCameraManager` instance: when a raid change rebuilds the manager, the prefix hands the new instance to the service and unsubscribes the old one.
 
 ## Size Consumers Rebuild Automatically
 
