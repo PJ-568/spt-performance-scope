@@ -18,6 +18,15 @@ fi
 # 从 csproj 读取版本号 / Read the version from the csproj
 VERSION="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/PerformanceScope.Plugin/PerformanceScope.Plugin.csproj | head -1)"
 [ -n "$VERSION" ] || { echo "错误：未能从 csproj 读取 Version | Error: cannot read Version from csproj" >&2; exit 1; }
+
+# 校验 BepInPlugin 特性里的版本与 csproj 一致，避免两处漂移
+# Verify the BepInPlugin version matches the csproj so the two cannot drift apart
+PLUGIN_VERSION="$(grep -oE '\[BepInPlugin\([^]]*' src/PerformanceScope.Plugin/Plugin.cs | grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' | tr -d '"' | tail -1)"
+if [ -n "$PLUGIN_VERSION" ] && [ "$PLUGIN_VERSION" != "$VERSION" ]; then
+  echo "错误：BepInPlugin 版本 $PLUGIN_VERSION 与 csproj 版本 $VERSION 不一致 | Error: BepInPlugin version $PLUGIN_VERSION does not match csproj version $VERSION" >&2
+  exit 1
+fi
+
 TAG="v$VERSION"
 
 # 工作区必须干净，避免发布内容与提交不一致

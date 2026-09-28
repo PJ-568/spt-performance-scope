@@ -16,7 +16,7 @@ namespace PerformanceScope
     /// config changes are debounced here before being handed to the service, while events such as scope exit are
     /// subscribed by the service itself. This plugin offers no custom UI or hotkey.
     /// </summary>
-    [BepInPlugin("com.pj568.performancescope", "PerformanceScope", "0.1.0")]
+    [BepInPlugin("com.pj568.performancescope", "PerformanceScope", "0.1.1")]
     public class PerformanceScopePlugin : BaseUnityPlugin
     {
         private const string HarmonyId = "com.pj568.performancescope";

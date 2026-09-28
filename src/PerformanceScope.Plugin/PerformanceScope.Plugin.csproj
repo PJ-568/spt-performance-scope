@@ -5,7 +5,7 @@
     <AssemblyName>PerformanceScope</AssemblyName>
     <RootNamespace>PerformanceScope</RootNamespace>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
   </PropertyGroup>
 
   <!-- 共享纯逻辑：与测试工程同源编译，避免多出一个运行时依赖 dll -->
