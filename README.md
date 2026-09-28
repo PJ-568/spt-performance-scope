@@ -16,7 +16,7 @@
 ## 快速上手
 
 1. 确认已安装 [BepInEx ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager)。
-2. 游戏内按 **F1**（可在其配置中改键）打开菜单，找到 `PerformanceScope` 分区。
+2. 游戏内按 **F12**（SPT 默认；上游 BepInEx ConfigurationManager 默认 F1，可在其配置中改键）打开菜单，找到 `PerformanceScope` 分区。
 3. 把「取值方式 | Resolution Mode」设为「屏幕高度比例」或「绝对像素」——
    默认是「游戏默认」，安装后不改变游戏行为。
 4. 进战局举镜查看效果；开启「启用日志」后可在
@@ -58,7 +58,7 @@ Picture-in-picture (PiP) is the most GPU-hungry part of a magnified optic: the g
 ## Quick start
 
 1. Make sure [BepInEx ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager) is installed.
-2. Press **F1** in game (rebindable in its config) and find the `PerformanceScope` sections.
+2. Press **F12** in game (the SPT default; upstream BepInEx ConfigurationManager defaults to F1, rebindable in its config) and find the `PerformanceScope` sections.
 3. Set "取值方式 | Resolution Mode" to "屏幕高度比例" (screen-height ratio) or "绝对像素" (absolute pixels) — the default is "游戏默认" (game default), which changes nothing.
 4. Enter a raid and aim down sights to see the effect; enable "启用日志 | Enable Logging" to watch `镜内分辨率 1024 → …` in `BepInEx/LogOutput.log`.
 

@@ -15,7 +15,7 @@
 
 1. 在 ConfigurationManager 里开启「启用日志」。
 2. 进入战局，按住右键进入瞄具。
-3. 打开 ConfigurationManager（默认 F1），把「取值方式」切到「屏幕高度比例」或「绝对像素」。
+3. 打开 ConfigurationManager（SPT 中默认 F12），把「取值方式」切到「屏幕高度比例」或「绝对像素」。
 4. 观察 `BepInEx/LogOutput.log` 的 `镜内分辨率 1024 → …` 与镜内画质/帧数变化。
 5. 关闭「瞄准中立即应用」后瞄准时改值，确认改动在退出镜内后才生效。
 
@@ -43,7 +43,7 @@ The second line means the scope resolution has switched from the game default `1
 
 1. Enable "启用日志 | Enable Logging" in ConfigurationManager.
 2. Enter a raid and aim down sights through a magnified optic.
-3. Open ConfigurationManager (default F1) and switch "取值方式 | Resolution Mode" to "屏幕高度比例" or "绝对像素".
+3. Open ConfigurationManager (default F12 in SPT) and switch "取值方式 | Resolution Mode" to "屏幕高度比例" or "绝对像素".
 4. Watch `BepInEx/LogOutput.log` for `镜内分辨率 1024 → …`, and check the scoped image quality / frame rate.
 5. Turn off "瞄准中立即应用 | Apply While Scoped", change the value while scoped, and confirm the change only applies after you unscope.
 

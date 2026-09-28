@@ -5,10 +5,10 @@ namespace PerformanceScope
 {
     /// <summary>
     /// 插件配置项定义。所有绑定项以静态属性暴露，供服务层直接读取。
-    /// 配置界面由 BepInEx ConfigurationManager 提供（默认 F1，可在其配置中改键）。
+    /// 配置界面由 BepInEx ConfigurationManager 提供（SPT 中默认 F12，可在其配置中改键）。
     /// Plugin configuration definitions. All bindings are exposed as static properties
     /// for the service layer to read directly.
-    /// The config UI is provided by BepInEx ConfigurationManager (F1 by default; rebindable in its config).
+    /// The config UI is provided by BepInEx ConfigurationManager (F12 by default in SPT; rebindable in its config).
     /// </summary>
     internal static class PluginConfig
     {

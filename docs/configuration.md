@@ -2,7 +2,7 @@
 
 配置文件：`BepInEx/config/com.pj568.performancescope.cfg`（也可用 BepInEx ConfigurationManager 修改）。
 
-本插件不自带任何自定义界面或热键。安装 [BepInEx ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager) 后，游戏内按 **F1**（可在其配置文件中改键）打开菜单，在 `PerformanceScope` 分区调整；改动由服务层每帧同步，在游戏内即时生效。
+本插件不自带任何自定义界面或热键。安装 [BepInEx ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager) 后，游戏内按 **F12**（SPT 默认；上游默认 F1，可在其配置文件中改键）打开菜单，在 `PerformanceScope` 分区调整；改动由服务层每帧同步，在游戏内即时生效。
 
 ## 配置表
 
@@ -38,7 +38,7 @@
 
 Config file: `BepInEx/config/com.pj568.performancescope.cfg` (or edit through BepInEx ConfigurationManager).
 
-The plugin ships no custom UI or hotkeys. Install [BepInEx ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager), then press **F1** in game (rebindable in its config) and adjust the `PerformanceScope` sections; changes are synced every frame by the service layer and apply immediately in game.
+The plugin ships no custom UI or hotkeys. Install [BepInEx ConfigurationManager](https://github.com/BepInEx/BepInEx.ConfigurationManager), then press **F12** in game (the SPT default; upstream defaults to F1, rebindable in its config) and adjust the `PerformanceScope` sections; changes are synced every frame by the service layer and apply immediately in game.
 
 ## Config Table
 
