@@ -3,8 +3,8 @@
 # 构建 → 打包 → 打 tag → 推送 → 创建 GitHub Release
 # build → package → tag → push → create GitHub Release
 # 用法 / Usage：scripts/release.sh [--dry-run]
-# 前置 / Prerequisites：已安装并登录 gh，且仓库已配置 remote origin
-#   GitHub CLI (gh) installed and logged in, with a configured remote origin
+# 前置 / Prerequisites：已安装 gh 并完成鉴权（gh auth login，或提供 GH_TOKEN），且仓库已配置 remote origin
+#   GitHub CLI (gh) installed and authenticated (gh auth login, or provide GH_TOKEN), with a configured remote origin
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -59,6 +59,12 @@ fi
 
 command -v gh >/dev/null 2>&1 || { echo "错误：未安装 GitHub CLI（gh）| Error: GitHub CLI (gh) not installed" >&2; exit 1; }
 git remote get-url origin >/dev/null 2>&1 || { echo "错误：未配置 git remote origin | Error: no git remote 'origin' configured" >&2; exit 1; }
+
+# 需要可用的 gh 鉴权（或提供 GH_TOKEN）；在打 tag 之前校验，避免留下没有 Release 的悬空 tag
+# Require working gh auth (or GH_TOKEN); checked before tagging to avoid a dangling tag without a Release
+if [ -z "${GH_TOKEN:-}" ]; then
+  gh auth status >/dev/null 2>&1 || { echo "错误：gh 未登录，请先 gh auth login 或设置 GH_TOKEN | Error: gh is not authenticated; run gh auth login or set GH_TOKEN" >&2; exit 1; }
+fi
 
 git tag -a "$TAG" -m "PerformanceScope $TAG"
 git push origin "$BRANCH"

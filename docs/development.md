@@ -37,7 +37,7 @@ scripts/release.sh
 scripts/release.sh --dry-run
 ```
 
-发布前置：已安装并登录 GitHub CLI（`gh`），且仓库已配置 `remote origin`。`release.sh` 会校验工作区干净、tag 不存在，发布后自动创建带 zip 附件的 Release。
+发布前置：已安装并完成鉴权的 GitHub CLI（`gh auth login`，或提供 `GH_TOKEN` 环境变量），且仓库已配置 `remote origin`。`release.sh` 会在打 tag 之前校验工作区干净、tag 不存在以及 gh 鉴权，发布后自动创建带 zip 附件的 Release。
 
 ## 部署（本机）
 
@@ -91,7 +91,7 @@ scripts/release.sh
 scripts/release.sh --dry-run
 ```
 
-Release prerequisites: GitHub CLI (`gh`) installed and logged in, and a configured `remote origin`. `release.sh` verifies a clean work tree and a fresh tag, then creates a Release with the zip attached.
+Release prerequisites: an installed and authenticated GitHub CLI (`gh auth login`, or a `GH_TOKEN` environment variable), and a configured `remote origin`. `release.sh` checks a clean work tree, a fresh tag and gh authentication before tagging, then creates a Release with the zip attached.
 
 ## Deploy (Local)
 
