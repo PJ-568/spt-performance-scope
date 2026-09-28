@@ -6,6 +6,15 @@
 
 镜内画中画（PiP）是原生瞄具最吃 GPU 的部分：游戏会为瞄具单独创建一台相机，把一张 `N×N` 的方形 RenderTexture（默认 `1024²`）贴到镜片上。本插件让这个 `N` 可配置，从而在画质与帧数之间自行取舍。
 
+## 效果
+
+同一靶场、同一瞄具，仅改变镜内分辨率，镜片外的画面保持一致：
+
+| 绝对像素 2048 | 绝对像素 256 | 绝对像素 64 |
+| --- | --- | --- |
+| ![绝对像素 2048](assets/high.webp) | ![绝对像素 256](assets/low.webp) | ![绝对像素 64](assets/potato.webp) |
+| 镜内清晰，开销最大 | 折中 | 明显变糊，开销最小 |
+
 ## 安装
 
 1. 下载 Releases 中的 `PerformanceScope-v{版本}.zip`。
@@ -47,6 +56,15 @@ SPT `4.1.x`（EFT 客户端 `0.16`）。
 > An SPT client plugin that adjusts the render resolution of the **in-scope (PiP) camera** for magnified optics in Escape from Tarkov.
 
 Picture-in-picture (PiP) is the most GPU-hungry part of a magnified optic: the game creates a dedicated camera and renders an `N×N` square RenderTexture (default `1024²`) onto the lens. This plugin makes that `N` configurable, so you can trade image quality for frame rate.
+
+## Effect
+
+Same range, same optic; only the in-scope resolution changes, while the exterior stays identical:
+
+| Absolute pixels 2048 | Absolute pixels 256 | Absolute pixels 64 |
+| --- | --- | --- |
+| ![absolute pixels 2048](assets/high.webp) | ![absolute pixels 256](assets/low.webp) | ![absolute pixels 64](assets/potato.webp) |
+| Sharpest in-scope image, highest cost | Balanced | Clearly blurry, lowest cost |
 
 ## Installation
 
