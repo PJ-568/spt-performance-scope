@@ -1,5 +1,4 @@
 using System;
-using BepInEx.Configuration;
 using EFT.CameraControl;
 using PerformanceScope.Core;
 using UnityEngine;
@@ -8,11 +7,11 @@ namespace PerformanceScope
 {
     /// <summary>
     /// 镜内 PiP 分辨率的决策与应用，完全事件驱动，不做任何每帧轮询：
-    /// 配置变更来自 ConfigFile.SettingChanged，瞄具退出来自 OpticCameraManager.OnOpticDisabled，
+    /// 配置变更由插件防抖后调用 <see cref="TryApply"/>，瞄具退出来自 OpticCameraManager.OnOpticDisabled，
     /// 战局开始则由 SetResolution 的 prefix 直接覆盖（无需运行时补偿）。
     /// Decision and application of the in-scope PiP resolution, fully event-driven with no per-frame polling:
-    /// config changes come from ConfigFile.SettingChanged, scope exit from OpticCameraManager.OnOpticDisabled,
-    /// and raid start is covered directly by the SetResolution prefix.
+    /// config changes are debounced by the plugin which then calls <see cref="TryApply"/>, scope exit comes from
+    /// OpticCameraManager.OnOpticDisabled, and raid start is covered directly by the SetResolution prefix.
     /// </summary>
     internal sealed class OpticResolutionService
     {
@@ -47,30 +46,11 @@ namespace PerformanceScope
         }
 
         /// <summary>
-        /// 订阅配置变更（ConfigFile 级事件）。
-        /// Subscribe to config changes (ConfigFile-level event).
-        /// </summary>
-        public void HookSettings()
-        {
-            if (PluginConfig.File == null)
-            {
-                return;
-            }
-
-            PluginConfig.File.SettingChanged += OnSettingChanged;
-        }
-
-        /// <summary>
-        /// 取消全部订阅（配置与镜内管理器）。
-        /// Remove every subscription (config and optic camera manager).
+        /// 取消镜内管理器的订阅。
+        /// Remove the optic camera manager subscription.
         /// </summary>
         public void Unhook()
         {
-            if (PluginConfig.File != null)
-            {
-                PluginConfig.File.SettingChanged -= OnSettingChanged;
-            }
-
             if (_hookedManager != null)
             {
                 try
@@ -143,11 +123,6 @@ namespace PerformanceScope
             }
 
             Apply(manager, target);
-        }
-
-        private void OnSettingChanged(object sender, SettingChangedEventArgs e)
-        {
-            TryApply();
         }
 
         private void OnOpticDisabled()

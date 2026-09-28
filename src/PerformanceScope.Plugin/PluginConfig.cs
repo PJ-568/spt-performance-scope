@@ -16,8 +16,8 @@ namespace PerformanceScope
         private const string SectionResolution = "2. 镜内分辨率 · Scope Resolution";
 
         /// <summary>
-        /// 底层配置文件，供服务层订阅 <c>SettingChanged</c> 事件。
-        /// The underlying config file, used by the service layer to subscribe to <c>SettingChanged</c>.
+        /// 底层配置文件，供插件订阅 <c>SettingChanged</c> 事件。
+        /// The underlying config file, used by the plugin to subscribe to <c>SettingChanged</c>.
         /// </summary>
         public static ConfigFile File { get; private set; }
 
