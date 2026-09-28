@@ -1,6 +1,6 @@
 # 原理与逆向细节
 
-> 本文记录 PerformanceScope 涉及的《逃离塔科夫》客户端渲染管线细节，全部来自对本机安装的 SPT 4.1.x `Assembly-CSharp.dll` 的实际反编译。
+> 本文记录 PerformanceScope 涉及的《Single Player Tushonka》客户端渲染管线细节，全部来自对本机安装的 SPT 4.1.x `Assembly-CSharp.dll` 的实际反编译。
 
 ## 镜内 PiP 管线
 
@@ -95,7 +95,7 @@
 
 # Principles and Reverse-Engineering Details
 
-> This document records the Escape from Tarkov client rendering-pipeline details behind PerformanceScope, all taken from decompiling the SPT 4.1.x `Assembly-CSharp.dll` installed on this machine.
+> This document records the Single Player Tushonka client rendering-pipeline details behind PerformanceScope, all taken from decompiling the SPT 4.1.x `Assembly-CSharp.dll` installed on this machine.
 
 ## The In-Scope PiP Pipeline
 

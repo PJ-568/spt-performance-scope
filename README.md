@@ -2,7 +2,7 @@
 
 # PerformanceScope
 
-> 调整《逃离塔科夫》光学瞄具**镜内放大（PiP）相机**渲染分辨率的 SPT 客户端插件。
+> 调整《Single Player Tushonka》光学瞄具**镜内放大（PiP）相机**渲染分辨率的 SPT 客户端插件。
 
 镜内画中画（PiP）是原生瞄具最吃 GPU 的部分：游戏会为瞄具单独创建一台相机，把一张 `N×N` 的方形 RenderTexture（默认 `1024²`）贴到镜片上。本插件让这个 `N` 可配置，从而在画质与帧数之间自行取舍。
 
@@ -53,7 +53,7 @@ SPT `4.1.x`（EFT 客户端 `0.16`）。
 
 # PerformanceScope
 
-> An SPT client plugin that adjusts the render resolution of the **in-scope (PiP) camera** for magnified optics in Escape from Tarkov.
+> An SPT client plugin that adjusts the render resolution of the **in-scope (PiP) camera** for magnified optics in Single Player Tushonka.
 
 Picture-in-picture (PiP) is the most GPU-hungry part of a magnified optic: the game creates a dedicated camera and renders an `N×N` square RenderTexture (default `1024²`) onto the lens. This plugin makes that `N` configurable, so you can trade image quality for frame rate.
 
