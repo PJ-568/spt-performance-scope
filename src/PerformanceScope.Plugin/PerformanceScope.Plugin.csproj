@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net471</TargetFramework>
+    <AssemblyName>PerformanceScope</AssemblyName>
+    <RootNamespace>PerformanceScope</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <!-- 共享纯逻辑：与测试工程同源编译，避免多出一个运行时依赖 dll -->
+  <ItemGroup>
+    <Compile Include="..\PerformanceScope.Core\**\*.cs" Link="Core\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(SPT_BEPINEX_CORE)/BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(SPT_BEPINEX_CORE)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(SPT_MANAGED)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(SPT_MANAGED)/UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(SPT_MANAGED)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- 本地 Release 构建后自动部署到游戏插件目录（可用 -p:DeployToGame=false 关闭） -->
+  <Target Name="DeployToGame" AfterTargets="Build"
+          Condition="'$(DeployToGame)' == 'true' And '$(Configuration)' == 'Release' And Exists('$(SPT_DIR)')">
+    <MakeDir Directories="$(SPT_DIR)/BepInEx/plugins/PerformanceScope" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SPT_DIR)/BepInEx/plugins/PerformanceScope" />
+    <Message Importance="high" Text="已部署：$(SPT_DIR)/BepInEx/plugins/PerformanceScope/$(TargetFileName)" />
+  </Target>
+
+</Project>

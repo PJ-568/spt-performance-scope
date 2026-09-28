@@ -1,0 +1,27 @@
+# 发行：需要一台已安装 SPT 客户端的自托管 runner（客户端程序集为专有文件，无法在公共 runner 构建）。
+# 用法：在 Actions 页手动触发，或推送 v* 标签。
+name: 发行
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  package:
+    runs-on: [self-hosted, linux, spt]
+    steps:
+      - uses: actions/checkout@v4
+      - name: 打包
+        run: scripts/package.sh
+        env:
+          SPT_DIR: ${{ vars.SPT_DIR }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PerformanceScope
+          path: artifacts/*.zip
+      - name: 创建 Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.zip

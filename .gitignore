@@ -1,0 +1,15 @@
+# 构建产物
+bin/
+obj/
+artifacts/
+
+# 本地覆盖与 IDE
+local.props
+Directory.Build.local.props
+*.user
+.vs/
+.idea/
+
+# 反编译/临时研究产物
+/re/
+*.orig

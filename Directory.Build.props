@@ -1,0 +1,23 @@
+<Project>
+
+  <!--
+    游戏（SPT 客户端）根目录与引用路径。
+    优先使用环境变量 SPT_DIR；未设置时回退到本机 Lutris 前缀默认路径。
+    客户端程序集为专有文件，不随仓库分发，构建前需自备 SPT 客户端安装。
+  -->
+  <PropertyGroup>
+    <SPT_DIR Condition="'$(SPT_DIR)' == ''">$(HOME)/.local/lutris/escape-from-tarkov/drive_c/Battlestate Games/Escape from Tarkov</SPT_DIR>
+    <SPT_MANAGED>$(SPT_DIR)/EscapeFromTarkov_Data/Managed</SPT_MANAGED>
+    <SPT_BEPINEX_CORE>$(SPT_DIR)/BepInEx/core</SPT_BEPINEX_CORE>
+    <DeployToGame Condition="'$(DeployToGame)' == ''">true</DeployToGame>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

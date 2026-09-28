@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PerformanceScope.Plugin/PerformanceScope.Plugin.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PerformanceScope.Tests/PerformanceScope.Tests.csproj" />
+  </Folder>
+</Solution>
