@@ -72,12 +72,21 @@ Release 构建会自动把 dll 复制到 `$SPT_DIR/BepInEx/plugins/PerformanceSc
 dotnet test tests/PerformanceScope.Tests/PerformanceScope.Tests.csproj
 ```
 
-## 打包
+## 打包与发布
 
 ```shellscript
+# 仅打包
 scripts/package.sh
 # 产物：artifacts/PerformanceScope-v{版本}.zip
+
+# 一键发布：构建 → 打包 → 打 tag → 推送 → 创建 GitHub Release
+scripts/release.sh
+# 预演（只构建打包并打印将执行的命令，需工作区干净）
+scripts/release.sh --dry-run
 ```
+
+发布前置：已安装并登录 GitHub CLI（`gh`），且仓库已配置 `remote origin`。
+`release.sh` 会校验工作区干净、tag 不存在，发布后自动创建带 zip 附件的 Release。
 
 ## 部署（本机）
 
@@ -117,7 +126,7 @@ scripts/package.sh
 - **镜内低分辨率下纹理锯齿会更明显**：镜内相机的 mipmap bias 只在 `Init()` 时设置一次，插件不做补偿。
 - **与其它改 `SetResolution` 的模组可能冲突**：若第三方 prefix 改写同一入参，插件检测到目标未生效后会暂停重试直至你更改目标值，避免每帧重建 RenderTexture。
 - **版本敏感**：依赖具体类型与方法，EFT 更新后可能失效。
-- **CI 限制**：公共 runner 无法构建客户端插件（缺少专有程序集），`test.yml` 只跑纯逻辑单测；发行包需在装有 SPT 的机器（或自托管 runner）上通过 `scripts/package.sh` 生成。
+- **CI 限制**：客户端插件必须引用专有程序集，公共 runner 无法构建，故仓库只保留 `test.yml`（跑纯逻辑单测）；发行包用 `scripts/release.sh` 本地一键发布。
 
 ## 许可证
 
