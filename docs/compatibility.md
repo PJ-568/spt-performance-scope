@@ -4,7 +4,7 @@
 
 - **PiP-Disabler**（`com.fiodor.pipdisabler`）：它是对 `SetResolution` 的 **postfix 门控**（不改写入参、不改字段），与本插件共存；被它抑制的镜内渲染不会触发本插件的冲突重试。
 - **Fontaine's FOV Fix / Amands's Graphics**：patch 的是 `OpticComponentUpdater` 等与本插件不重叠的目标，无直接冲突。
-- **DERP（Dynamic External Resolution Patch）**：改的是**主相机/全局**分辨率与超分档，与本插件（镜内方形 RT 尺寸）机制不同；可同时使用，但两者都会影响分辨率，注意叠加效果。
+- **DERP（Dynamic External Resolution Patch）**：DERP 只对**主相机**操作——patch `OpticSight.OnEnable` / `OpticSight.OnDisable` / `Player.FirearmController.ChangeAimingMode`，并在 `EFT.CameraControl.CameraManager` 上调用 `SSAAImpl.Switch` / `SetAntiAliasing` / `SetFSR2` / `SetFSR3`。它既不 patch `OpticCameraManager.SetResolution`，也不改 `OpticFinalResolution`，与本插件**没有重叠的 patch 目标或共享状态**，可以同时使用；效果叠加：镜外由 DERP 降，镜内由本插件降。注意两点：① DERP 自身在 DLSS/FSR 下进镜会黑屏闪烁（官方建议用 TAA + Sampling Downgrade 规避）；② 两者同时降低分辨率时，镜片区域会被「双重降质」，通常比单独用任一都更糊。
 - **DLSS / FSR**：本插件**不切换超分档**；但开启超分时改变镜内 RT 尺寸可能产生一帧闪烁，可关闭「瞄准中立即应用」规避。SPT 官方亦记录过「DLSS/FSR 下进镜切换档位会黑屏闪烁」。
 
 ## 已知限制与风险
@@ -28,7 +28,7 @@
 
 - **PiP-Disabler** (`com.fiodor.pipdisabler`): it is a **postfix gate** on `SetResolution` (it neither rewrites the argument nor the field), so it coexists with this plugin; suppressed scoped rendering does not trigger this plugin's conflict retry.
 - **Fontaine's FOV Fix / Amands's Graphics**: they patch targets (`OpticComponentUpdater`, etc.) that do not overlap this plugin, so there is no direct conflict.
-- **DERP (Dynamic External Resolution Patch)**: it changes the **main camera / global** resolution and upscaler mode, a different mechanism from this plugin (in-scope square RT size). Both can be used together, but note that their effects stack.
+- **DERP (Dynamic External Resolution Patch)**: DERP acts on the **main camera** only — it patches `OpticSight.OnEnable` / `OpticSight.OnDisable` / `Player.FirearmController.ChangeAimingMode` and calls `SSAAImpl.Switch` / `SetAntiAliasing` / `SetFSR2` / `SetFSR3` on `EFT.CameraControl.CameraManager`. It neither patches `OpticCameraManager.SetResolution` nor touches `OpticFinalResolution`, so it shares no patch target or state with this plugin and the two can run together; their effects stack: the exterior is lowered by DERP and the in-scope image by this plugin. Two caveats: (1) DERP itself black-flickers on scope transition under DLSS/FSR (the official advice is TAA + Sampling Downgrade); (2) when both lower resolution, the lens area is degraded twice and usually looks softer than with either alone.
 - **DLSS / FSR**: this plugin **does not switch upscaler modes**; however, changing the scoped RT size while an upscaler is active may cause a one-frame flicker — turn off "瞄准中立即应用" to avoid it. SPT officially documents a black flicker when switching modes under DLSS/FSR.
 
 ## Known Limitations and Risks
