@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 
 const REPO_DIR = fileURLToPath(new URL("..", import.meta.url));
 
-// 标题语法正则（与 git-commit-regulation README 附录「标题语法」同步维护）
+// 标题语法正则（与 git-commit-regulation README 附录“标题语法”同步维护）
 const TITLE_RE =
   /^【(?<type>初始|更改|新增|修复|格式|文档|测试|维护)(?:，(?<scope>[\p{Script=Han}A-Za-z0-9_-]{1,16}))?】(?<summary>[^\n]{1,60})$/u;
 const HAN_ONLY_RE = /^[\p{Script=Han}]+$/u;

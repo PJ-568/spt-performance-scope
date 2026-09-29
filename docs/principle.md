@@ -67,7 +67,7 @@
 插件不做任何每帧轮询，只在三类时机工作：
 
 1. **战局开始**：游戏的 `Init()` 调用 `SetResolution`，prefix 直接把入参改成目标值，RT 一次建成，无需运行时补偿。
-2. **配置变更**：插件订阅 `ConfigFile.SettingChanged`，防抖 250 ms 后应用一次（ConfigurationManager 拖动滑块时几乎每帧写值，逐次应用会连续重建）；未瞄准则应用，正在瞄准且「瞄准中立即应用」为真时也应用。
+2. **配置变更**：插件订阅 `ConfigFile.SettingChanged`，防抖 250 ms 后应用一次（ConfigurationManager 拖动滑块时几乎每帧写值，逐次应用会连续重建）；未瞄准则应用，正在瞄准且“瞄准中立即应用”为真时也应用。
 3. **退出镜内**：订阅 `OpticCameraManager.OnOpticDisabled`（在 `CurrentOpticSight` 置空且镜内相机停用之后触发，是安全的重建窗口），在此补齐被推迟的改动。
 
 订阅按 `OpticCameraManager` 实例幂等：战局切换导致管理器重建时，prefix 会把新实例交给服务并退订旧实例。

@@ -4,13 +4,13 @@
 
 - **PiP-Disabler**（`com.fiodor.pipdisabler`）：它是对 `SetResolution` 的 **postfix 门控**（不改写入参、不改字段），与本插件共存；被它抑制的镜内渲染不会触发本插件的冲突重试。
 - **Fontaine's FOV Fix / Amands's Graphics**：patch 的是 `OpticComponentUpdater` 等与本插件不重叠的目标，无直接冲突。
-- **DERP（Dynamic External Resolution Patch）**：DERP 只对**主相机**操作——patch `OpticSight.OnEnable` / `OpticSight.OnDisable` / `Player.FirearmController.ChangeAimingMode`，并在 `EFT.CameraControl.CameraManager` 上调用 `SSAAImpl.Switch` / `SetAntiAliasing` / `SetFSR2` / `SetFSR3`。它既不 patch `OpticCameraManager.SetResolution`，也不改 `OpticFinalResolution`，与本插件**没有重叠的 patch 目标或共享状态**，可以同时使用；效果叠加：镜外由 DERP 降，镜内由本插件降。注意两点：① DERP 自身在 DLSS/FSR 下进镜会黑屏闪烁（官方建议用 TAA + Sampling Downgrade 规避）；② 两者同时降低分辨率时，镜片区域会被「双重降质」，通常比单独用任一都更糊。
-- **DLSS / FSR**：本插件**不切换超分档**；但开启超分时改变镜内 RT 尺寸可能产生一帧闪烁，可关闭「瞄准中立即应用」规避。SPT 官方亦记录过「DLSS/FSR 下进镜切换档位会黑屏闪烁」。
+- **DERP（Dynamic External Resolution Patch）**：DERP 只对**主相机**操作——patch `OpticSight.OnEnable` / `OpticSight.OnDisable` / `Player.FirearmController.ChangeAimingMode`，并在 `EFT.CameraControl.CameraManager` 上调用 `SSAAImpl.Switch` / `SetAntiAliasing` / `SetFSR2` / `SetFSR3`。它既不 patch `OpticCameraManager.SetResolution`，也不改 `OpticFinalResolution`，与本插件**没有重叠的 patch 目标或共享状态**，可以同时使用；效果叠加：镜外由 DERP 降，镜内由本插件降。注意两点：① DERP 自身在 DLSS/FSR 下进镜会黑屏闪烁（官方建议用 TAA + Sampling Downgrade 规避）；② 两者同时降低分辨率时，镜片区域会被“双重降质”，通常比单独用任一都更糊。
+- **DLSS / FSR**：本插件**不切换超分档**；但开启超分时改变镜内 RT 尺寸可能产生一帧闪烁，可关闭“瞄准中立即应用”规避。SPT 官方亦记录过“DLSS/FSR 下进镜切换档位会黑屏闪烁”。
 
 ## 已知限制与风险
 
 - **无法独立设置镜内超分档**：全游戏只有一套挂在主相机上的 `SSAA`/`SSAAImpl`，镜内画面是其一部分；独立的镜内 FSR/DLSS 需要另挂一套组件，本插件不做。
-- **瞄准中改分辨率可能有一帧闪烁**：因为会销毁并重建 RenderTexture；可将「瞄准中立即应用」关闭以规避。
+- **瞄准中改分辨率可能有一帧闪烁**：因为会销毁并重建 RenderTexture；可将“瞄准中立即应用”关闭以规避。
 - **镜内低分辨率下纹理锯齿会更明显**：镜内相机的 mipmap bias 只在 `Init()` 时设置一次，插件不做补偿。
 - **与其它改 `SetResolution` 的模组可能冲突**：若第三方 prefix 改写同一入参，插件检测到目标未生效后会暂停重试直至你更改目标值，避免反复重建 RenderTexture。
 - **版本敏感**：依赖具体类型与方法，EFT 更新后可能失效。
