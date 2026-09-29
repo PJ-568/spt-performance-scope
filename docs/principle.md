@@ -72,6 +72,31 @@
 
 订阅按 `OpticCameraManager` 实例幂等：战局切换导致管理器重建时，prefix 会把新实例交给服务并退订旧实例。
 
+## 镜内贴图 mip 与细节的可覆盖点
+
+覆盖镜内贴图 mip 与镜内细节的写入点共两处，本插件只介入 `CopyComponentFromOptic`，刻意不碰 `LateUpdate`。
+
+### 镜内贴图 mip
+
+`EFT.CameraControl.OpticCameraManager.Init()` 会把镜内相机自己的 `UnityEngine.StreamingController.streamingMipmapBias` 设为 `GraphicsSettingsGroup.TextureQualityToMipBias(TextureQuality)`，映射为 `Clamp(2 − 画质, 0, 2)`（`TextureQuality` 取 0–2）。全仓库只有这一处写镜内相机的该值。因此插件在镜内相机创建时覆盖一次即可持久，**不需要每帧**。
+
+### 镜内细节
+
+`EFT.CameraControl.OpticComponentUpdater.CopyComponentFromOptic(OpticSight)` 会按每瞄具的 `ScopeEffectsData` 设置镜内相机上的组件开关（`chromaticAberration`、`bloomOptimized`、`ultimateBloom`、`fisheye`、`cc_FastVignette`、`tonemapping` 等）。**这些不会被每帧覆盖**，所以插件用该方法的 postfix 覆盖一次即可持久。
+
+### 刻意不做体积光与散射
+
+`OpticComponentUpdater.LateUpdate()` **每帧**把主相机的 `volumetricLightRenderer.enabled` / `.Resolution`、`undithering.enabled`、`tod_Scattering`、`mboit_Scattering` 覆盖到镜内相机，要改它们必须每帧强制覆盖；本插件选择不做，只提供第一类的三项（外加不暴露 `tonemapping`，因为关掉它会破坏镜内色彩与曝光）。
+
+新增的 Harmony 目标是 `OpticComponentUpdater.CopyComponentFromOptic`（postfix）；**不 patch** `LateUpdate` 或 `Awake`。
+
+### 两条写入路径
+
+| 路径 | 时机 | 覆盖的组件 |
+| --- | --- | --- |
+| `CopyComponentFromOptic` | 换镜/进镜时一次（瞄具实例变化时执行） | 色散、泛光、终极泛光、鱼眼、暗角、色调映射、NV/热成像等 |
+| `LateUpdate` | 每帧（仅镜内相机激活时） | undithering、体积光（含 Resolution）、TOD/MBOIT 散射、postProcessLayer/TAA |
+
 ## 尺寸消费方自动重建
 
 镜内尺寸变化不需要插件干预。以下子系统会在后续帧自检并重建：
@@ -166,6 +191,31 @@ The plugin does no per-frame polling; it only acts on three triggers:
 3. **Scope exit**: it subscribes to `OpticCameraManager.OnOpticDisabled` (fired after `CurrentOpticSight` is cleared and the optic camera is deactivated — a safe rebuild window), where deferred changes are applied.
 
 Subscriptions are idempotent per `OpticCameraManager` instance: when a raid change rebuilds the manager, the prefix hands the new instance to the service and unsubscribes the old one.
+
+## Overridable Points for In-Scope Mip and Detail
+
+There are two write points for the in-scope texture mip and the in-scope details; this plugin only touches `CopyComponentFromOptic` and deliberately leaves `LateUpdate` alone.
+
+### Scope texture mip
+
+`EFT.CameraControl.OpticCameraManager.Init()` sets the scope camera's own `UnityEngine.StreamingController.streamingMipmapBias` to `GraphicsSettingsGroup.TextureQualityToMipBias(TextureQuality)`, which maps to `Clamp(2 − texture quality, 0, 2)` (`TextureQuality` is 0–2). This is the only place in the whole codebase that writes that value on the scope camera. The plugin therefore overrides it once when the scope camera is created, and it persists — **no per-frame work is needed**.
+
+### In-scope details
+
+`EFT.CameraControl.OpticComponentUpdater.CopyComponentFromOptic(OpticSight)` sets the component toggles on the scope camera according to each optic's `ScopeEffectsData` (`chromaticAberration`, `bloomOptimized`, `ultimateBloom`, `fisheye`, `cc_FastVignette`, `tonemapping`, etc.). **These are not overwritten every frame**, so the plugin overrides them once in that method's postfix and the result persists.
+
+### Volumetric light and scattering deliberately excluded
+
+`OpticComponentUpdater.LateUpdate()` copies the main camera's `volumetricLightRenderer.enabled` / `.Resolution`, `undithering.enabled`, `tod_Scattering` and `mboit_Scattering` onto the scope camera **every frame**; changing them would require forcing an override every frame. This plugin chooses not to do so and offers only the three of the first kind (and it does not expose `tonemapping`, because disabling it would break the in-scope color and exposure).
+
+The new Harmony target is `OpticComponentUpdater.CopyComponentFromOptic` (postfix); it does **not** patch `LateUpdate` or `Awake`.
+
+### The Two Write Paths
+
+| Path | Timing | Components overridden |
+| --- | --- | --- |
+| `CopyComponentFromOptic` | once per optic change / scope entry (runs when the optic instance changes) | chromatic aberration, bloom, ultimate bloom, fisheye, vignette, tonemapping, NV/thermal, etc. |
+| `LateUpdate` | every frame (only while the scope camera is active) | undithering, volumetric light (including Resolution), TOD/MBOIT scattering, postProcessLayer/TAA |
 
 ## Size Consumers Rebuild Automatically
 

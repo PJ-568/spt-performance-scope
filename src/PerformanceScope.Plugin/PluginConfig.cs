@@ -15,6 +15,8 @@ namespace PerformanceScope
         private const string SectionGeneral = "1. 通用 · General";
         private const string SectionResolution = "2. 镜内分辨率 · Scope Resolution";
 
+        private const string SectionDetails = "3. 镜内贴图与细节 · Scope Textures & Details";
+
         /// <summary>
         /// 底层配置文件，供插件订阅 <c>SettingChanged</c> 事件。
         /// The underlying config file, used by the plugin to subscribe to <c>SettingChanged</c>.
@@ -34,6 +36,12 @@ namespace PerformanceScope
         public static ConfigEntry<int> AbsolutePixels { get; private set; }
 
         public static ConfigEntry<bool> ApplyWhileScoped { get; private set; }
+
+        public static ConfigEntry<ScopeSettingMode> MipMode { get; private set; }
+
+        public static ConfigEntry<float> MipBias { get; private set; }
+
+        public static ConfigEntry<ScopeSettingMode> DetailMode { get; private set; }
 
         /// <summary>
         /// 绑定全部配置项并立即落盘，生成带注释的初始配置文件。
@@ -110,6 +118,33 @@ namespace PerformanceScope
                     "关闭时，瞄准镜内期间的改动会推迟到退出镜内后应用，以避免画面闪烁。\nWhen off, changes made while scoped are deferred until you leave the scope, to avoid a one-frame flicker.",
                     null,
                     new ConfigurationManagerAttributes { Order = 4 }));
+
+            MipMode = config.Bind(
+                SectionDetails,
+                "镜内贴图 mip 模式 | Scope Mip Mode",
+                ScopeSettingMode.GameDefault,
+                new ConfigDescription(
+                    "游戏默认 / 自定义。自定义时覆盖镜内相机的贴图 mip 偏差。\nGame default / custom. When custom, overrides the optic camera's texture mip bias.",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 1 }));
+
+            MipBias = config.Bind(
+                SectionDetails,
+                "Mip 偏差 | Mip Bias",
+                ScopeMipMath.DefaultCustomBias,
+                new ConfigDescription(
+                    "绝对值覆盖镜内相机的 streamingMipmapBias：越大纹理越糊、越省带宽；游戏默认值取决于贴图品质，范围为 0 到 2。\nAbsolute override for the optic camera's streamingMipmapBias: higher is blurrier and cheaper. The game default depends on texture quality and ranges from 0 to 2.",
+                    new AcceptableValueRange<float>(ScopeMipMath.MinBias, ScopeMipMath.MaxBias),
+                    new ConfigurationManagerAttributes { Order = 2 }));
+
+            DetailMode = config.Bind(
+                SectionDetails,
+                "镜内细节模式 | Scope Detail Mode",
+                ScopeSettingMode.GameDefault,
+                new ConfigDescription(
+                    "游戏默认 / 自定义。自定义时关闭镜内泛光、终极泛光、色散与鱼眼（一次性覆盖，不动体积光与散射）。\nGame default / custom. When custom, disables in-scope bloom, ultimate bloom, chromatic aberration and fisheye (a one-shot override; volumetric light and scattering are left alone).",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 3 }));
 
             config.Save();
         }

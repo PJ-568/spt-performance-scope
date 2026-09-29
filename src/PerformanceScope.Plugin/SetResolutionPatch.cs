@@ -21,7 +21,7 @@ namespace PerformanceScope
         [HarmonyPrefix]
         private static void Prefix(OpticCameraManager __instance, ref int resolution)
         {
-            OpticResolutionService service = OpticResolutionService.Instance;
+            OpticQualityService service = OpticQualityService.Instance;
             if (service == null)
             {
                 // 插件尚未初始化完成，保持游戏原值透传。

@@ -41,8 +41,8 @@ namespace PerformanceScope
             PluginConfig.Init(Config);
             ApplyHarmonyPatches();
 
-            OpticResolutionService service = new OpticResolutionService();
-            OpticResolutionService.Instance = service;
+            OpticQualityService service = new OpticQualityService();
+            OpticQualityService.Instance = service;
 
             // 事件驱动：订阅配置变更（防抖后应用），不做任何每帧轮询。
             // Event-driven: subscribe to config changes (applied after a debounce); no per-frame polling.
@@ -67,7 +67,7 @@ namespace PerformanceScope
                 _pendingApply = null;
             }
 
-            OpticResolutionService.Instance?.Unhook();
+            OpticQualityService.Instance?.Unhook();
 
             if (_harmony == null)
             {
@@ -103,7 +103,7 @@ namespace PerformanceScope
         {
             yield return _debounceDelay;
             _pendingApply = null;
-            OpticResolutionService.Instance?.TryApply();
+            OpticQualityService.Instance?.TryApply();
         }
 
         private void ApplyHarmonyPatches()

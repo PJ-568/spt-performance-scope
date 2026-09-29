@@ -38,6 +38,10 @@
       <HintPath>$(SPT_MANAGED)/UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.StreamingModule">
+      <HintPath>$(SPT_MANAGED)/UnityEngine.StreamingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <!-- 本地 Release 构建后自动部署到游戏插件目录（可用 -p:DeployToGame=false 关闭） -->
