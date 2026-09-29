@@ -148,7 +148,7 @@ namespace PerformanceScope
                 "关闭镜内泛光 | Disable Scope Bloom",
                 false,
                 new ConfigDescription(
-                    "勾选后关闭镜内相机的泛光（bloomOptimized）。不勾选则保持游戏行为。\nCheck to disable the optic camera's bloom (bloomOptimized). Unchecked keeps the game default.",
+                    "勾选后关闭镜内相机的泛光。不勾选则保持游戏行为。\nCheck to disable the optic camera's bloom. Unchecked keeps the game default.",
                     null,
                     new ConfigurationManagerAttributes { Order = 3 }));
 
@@ -157,7 +157,7 @@ namespace PerformanceScope
                 "关闭镜内终极泛光 | Disable Scope Ultimate Bloom",
                 false,
                 new ConfigDescription(
-                    "勾选后关闭镜内相机的终极泛光（ultimateBloom）。\nCheck to disable the optic camera's ultimate bloom (ultimateBloom).",
+                    "勾选后关闭镜内相机的终极泛光。\nCheck to disable the optic camera's ultimate bloom.",
                     null,
                     new ConfigurationManagerAttributes { Order = 4 }));
 
@@ -166,7 +166,7 @@ namespace PerformanceScope
                 "关闭镜内色散 | Disable Scope Chromatic Aberration",
                 false,
                 new ConfigDescription(
-                    "勾选后关闭镜内相机的色散（chromaticAberration）。\nCheck to disable the optic camera's chromatic aberration (chromaticAberration).",
+                    "勾选后关闭镜内相机的色散。\nCheck to disable the optic camera's chromatic aberration.",
                     null,
                     new ConfigurationManagerAttributes { Order = 5 }));
 
@@ -175,7 +175,7 @@ namespace PerformanceScope
                 "关闭镜内鱼眼 | Disable Scope Fisheye",
                 false,
                 new ConfigDescription(
-                    "勾选后关闭镜内相机的鱼眼（fisheye）。\nCheck to disable the optic camera's fisheye (fisheye).",
+                    "勾选后关闭镜内相机的鱼眼。\nCheck to disable the optic camera's fisheye.",
                     null,
                     new ConfigurationManagerAttributes { Order = 6 }));
 
