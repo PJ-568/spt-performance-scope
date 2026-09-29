@@ -17,8 +17,12 @@
 
 ## 性能
 
-- **单次触发**：模组不做任何每帧轮询，常驻开销为零（不轮询、不分配、不绘制）。只在调整数值的瞬间触发一次镜内 RenderTexture 重建（连同体积光、GPUInstancer、DistantShadow 等消费方），可能有一帧卡顿；配置变更带 250 ms 防抖，所以拖动滑块也只重建一次。
-- **收益取决于瓶颈**：镜内画中画相当于“第二台相机把场景再渲染一遍”。降低镜内分辨率减少的是 GPU 填充与带宽，因此**在 GPU 瓶颈时对帧数提升显著**；若受限于 CPU（场景遍历、draw call 等与分辨率无关的开销），或镜外画面已占满 GPU，收益会明显变小。
+- **单次触发**：
+  模组不做任何每帧轮询，常驻开销为零。只在调整数值的瞬间触发一次镜内 RenderTexture 重建，可能有一帧卡顿；
+  有 250 ms 防抖，所以拖动滑块也只重建一次。
+- **收益取决于瓶颈**：镜内画中画相当于“第二台相机把场景再渲染一遍”。
+  降低镜内分辨率能降低 GPU 填充和带宽需求，**在 GPU 瓶颈时对帧数提升显著**；
+  若受限于 CPU，或镜外画面已占满 GPU，收益会明显变小。
 
 ## 安装
 
@@ -73,8 +77,13 @@ Same range, same optic; only the in-scope resolution changes, while the exterior
 
 ## Performance
 
-- **Single-shot**: the plugin does no per-frame polling, so its steady-state cost is zero (no polling, no allocations, no drawing). Only the moment you change a value triggers one in-scope RenderTexture rebuild (along with consumers such as volumetric lighting, GPUInstancer and DistantShadow), which may cost a frame of stutter; config changes are debounced by 250 ms, so dragging a slider still rebuilds only once.
-- **The gain depends on the bottleneck**: the in-scope picture is a second camera rendering the scene again. Lowering the in-scope resolution reduces GPU fill and bandwidth, so the frame-rate gain is **significant when the GPU is the bottleneck**; if you are limited by the CPU (scene traversal, draw calls — costs independent of resolution) or the exterior already saturates the GPU, the gain is much smaller.
+- **Single-shot**:
+  the plugin does no per-frame polling, so its steady-state cost is zero.
+  Only the moment you change a value triggers one in-scope RenderTexture rebuild, which may cost a frame of stutter; config changes are debounced by 250 ms, so dragging a slider still rebuilds only once.
+- **The gain depends on the bottleneck**:
+  the in-scope picture is a second camera rendering the scene again.
+  Lowering the in-scope resolution reduces GPU fill and bandwidth, so the frame-rate gain is **significant when the GPU is the bottleneck**.
+  If you are limited by the CPU or the exterior already saturates the GPU, the gain is much smaller.
 
 ## Installation
 
@@ -90,7 +99,7 @@ Same range, same optic; only the in-scope resolution changes, while the exterior
 3. Set "取值方式 | Resolution Mode" to "屏幕高度比例" (screen-height ratio) or "绝对像素" (absolute pixels) — the default is "游戏默认" (game default), which changes nothing.
 4. Enter a raid and aim down sights to see the effect; enable "启用日志 | Enable Logging" to watch `镜内分辨率 1024 → …` in `BepInEx/LogOutput.log`.
 
-> Note: with `屏幕高度比例`, a value of `0.7` on 4K (2160p) yields 1512, **higher** than the default 1024 and therefore more expensive.
+> Note: with `屏幕高度比例` (screen-height ratio), a value of `0.7` on 4K (2160p) yields 1512, **higher** than the default 1024 and therefore more expensive.
 
 ## Documentation
 
