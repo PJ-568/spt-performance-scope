@@ -15,6 +15,11 @@
 | ![绝对像素 2048](assets/high.webp) | ![绝对像素 256](assets/low.webp) | ![绝对像素 64](assets/potato.webp) |
 | 镜内清晰，开销最大 | 折中 | 明显变糊，开销最小 |
 
+## 性能
+
+- **单次触发**：模组不做任何每帧轮询，常驻开销为零（不轮询、不分配、不绘制）。只在调整数值的瞬间触发一次镜内 RenderTexture 重建（连同体积光、GPUInstancer、DistantShadow 等消费方），可能有一帧卡顿；配置变更带 250 ms 防抖，所以拖动滑块也只重建一次。
+- **收益取决于瓶颈**：镜内画中画相当于「第二台相机把场景再渲染一遍」。降低镜内分辨率减少的是 GPU 填充与带宽，因此**在 GPU 瓶颈时对帧数提升显著**；若受限于 CPU（场景遍历、draw call 等与分辨率无关的开销），或镜外画面已占满 GPU，收益会明显变小。
+
 ## 安装
 
 1. 下载 Releases 中的 `PerformanceScope-v{版本}.zip`。
@@ -65,6 +70,11 @@ Same range, same optic; only the in-scope resolution changes, while the exterior
 | --- | --- | --- |
 | ![absolute pixels 2048](assets/high.webp) | ![absolute pixels 256](assets/low.webp) | ![absolute pixels 64](assets/potato.webp) |
 | Sharpest in-scope image, highest cost | Balanced | Clearly blurry, lowest cost |
+
+## Performance
+
+- **Single-shot**: the plugin does no per-frame polling, so its steady-state cost is zero (no polling, no allocations, no drawing). Only the moment you change a value triggers one in-scope RenderTexture rebuild (along with consumers such as volumetric lighting, GPUInstancer and DistantShadow), which may cost a frame of stutter; config changes are debounced by 250 ms, so dragging a slider still rebuilds only once.
+- **The gain depends on the bottleneck**: the in-scope picture is a second camera rendering the scene again. Lowering the in-scope resolution reduces GPU fill and bandwidth, so the frame-rate gain is **significant when the GPU is the bottleneck**; if you are limited by the CPU (scene traversal, draw calls — costs independent of resolution) or the exterior already saturates the GPU, the gain is much smaller.
 
 ## Installation
 
