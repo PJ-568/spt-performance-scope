@@ -29,6 +29,16 @@ namespace PerformanceScope
             "fisheye"
         };
 
+        /// <summary>与 DetailFieldNames 对应的可读名称，用于日志。</summary>
+        /// <summary>Human-readable names matching DetailFieldNames, used for logging.</summary>
+        private static readonly string[] DetailLabels =
+        {
+            "泛光 / bloom",
+            "终极泛光 / ultimate bloom",
+            "色散 / chromatic aberration",
+            "鱼眼 / fisheye"
+        };
+
         private readonly FieldInfo[] _detailFields = new FieldInfo[DetailFieldNames.Length];
 
         private readonly bool[] _detailOriginal = new bool[DetailFieldNames.Length];
@@ -41,7 +51,9 @@ namespace PerformanceScope
 
         private int _detailOpticId = int.MinValue;
 
-        private bool _detailOverridden;
+        private readonly bool[] _detailOverridden = new bool[DetailFieldNames.Length];
+
+        private int _detailAppliedMask;
 
         /// <summary>
         /// 当前服务实例；插件未加载时为 null，补丁据此透传原值。
@@ -228,8 +240,8 @@ namespace PerformanceScope
         }
 
         /// <summary>
-        /// 自定义模式下关闭镜内细节；否则把此前关掉的组件还原为游戏原始值。
-        /// In custom mode, disable the in-scope detail components; otherwise restore whatever we disabled.
+        /// 按逐项开关应用镜内细节：勾选则关闭对应组件，取消勾选则还原为游戏原始值。
+        /// Apply the in-scope detail toggles: a checked effect is disabled, an unchecked one is restored to the game's original value.
         /// </summary>
         private void ApplyDetails(OpticComponentUpdater updater)
         {
@@ -238,50 +250,96 @@ namespace PerformanceScope
                 return;
             }
 
-            if (PluginConfig.DetailMode?.Value != ScopeSettingMode.Custom)
-            {
-                RestoreDetails(updater);
-                return;
-            }
-
             for (int i = 0; i < _detailFields.Length; i++)
             {
                 Behaviour behaviour = GetDetailBehaviour(updater, i);
-                if (behaviour != null)
+                if (behaviour == null)
                 {
-                    behaviour.enabled = false;
+                    continue;
+                }
+
+                if (IsDetailDisabled(i))
+                {
+                    if (behaviour.enabled)
+                    {
+                        behaviour.enabled = false;
+                    }
+
+                    _detailOverridden[i] = true;
+                }
+                else if (_detailOverridden[i])
+                {
+                    // 只还原「我们关掉过」的项，避免在从未覆盖时误写游戏的默认值。
+                    // Restore only effects we actually disabled, so a never-overridden state never writes the game's defaults.
+                    behaviour.enabled = _detailOriginal[i];
+                    _detailOverridden[i] = false;
                 }
             }
 
-            if (!_detailOverridden)
+            int mask = DesiredDetailMask();
+            if (mask != _detailAppliedMask)
             {
-                _detailOverridden = true;
-                Log.Info("镜内细节已精简：关闭泛光、终极泛光、色散与鱼眼 | In-scope detail reduced: bloom, ultimate bloom, chromatic aberration and fisheye disabled");
+                _detailAppliedMask = mask;
+                Log.Info(mask == 0
+                    ? "镜内细节已还原为游戏默认 | In-scope detail restored to game default"
+                    : $"镜内细节覆盖已更新：关闭 {DescribeDisabled(mask)} | In-scope detail overrides updated: {DescribeDisabled(mask)}");
             }
         }
 
         /// <summary>
-        /// 仅还原「我们关掉过」的组件，避免在从未覆盖时误写游戏的默认值。
-        /// Restore only components we actually disabled, so a never-overridden state never writes the game's defaults.
+        /// 逐项开关是否勾选（勾选表示关闭该效果）。
+        /// Whether an individual detail toggle is checked (checked means the effect is disabled).
         /// </summary>
-        private void RestoreDetails(OpticComponentUpdater updater)
+        private static bool IsDetailDisabled(int index)
         {
-            if (!_detailOverridden)
+            switch (index)
             {
-                return;
+                case 0:
+                    return PluginConfig.DisableBloom?.Value == true;
+                case 1:
+                    return PluginConfig.DisableUltimateBloom?.Value == true;
+                case 2:
+                    return PluginConfig.DisableChromaticAberration?.Value == true;
+                case 3:
+                    return PluginConfig.DisableFisheye?.Value == true;
+                default:
+                    return false;
             }
+        }
 
-            for (int i = 0; i < _detailFields.Length; i++)
+        private static int DesiredDetailMask()
+        {
+            int mask = 0;
+            for (int i = 0; i < DetailFieldNames.Length; i++)
             {
-                Behaviour behaviour = GetDetailBehaviour(updater, i);
-                if (behaviour != null)
+                if (IsDetailDisabled(i))
                 {
-                    behaviour.enabled = _detailOriginal[i];
+                    mask |= 1 << i;
                 }
             }
 
-            _detailOverridden = false;
-            Log.Info("镜内细节已还原为游戏默认 | In-scope detail restored to game default");
+            return mask;
+        }
+
+        private static string DescribeDisabled(int mask)
+        {
+            string text = string.Empty;
+            for (int i = 0; i < DetailLabels.Length; i++)
+            {
+                if ((mask & (1 << i)) == 0)
+                {
+                    continue;
+                }
+
+                if (text.Length > 0)
+                {
+                    text += "、";
+                }
+
+                text += DetailLabels[i];
+            }
+
+            return text;
         }
 
         private Behaviour GetDetailBehaviour(OpticComponentUpdater updater, int index)

@@ -17,7 +17,10 @@
 | 2. 镜内分辨率 · Scope Resolution | 瞄准中立即应用 \| Apply While Scoped | `true` | 关闭时，瞄准期间的改动推迟到退出镜内后应用。 |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 镜内贴图 mip 模式 \| Scope Mip Mode | `游戏默认` | 游戏默认 / 自定义。自定义时覆盖镜内相机的贴图 mip 偏差。 |
 | 3. 镜内贴图与细节 · Scope Textures & Details | Mip 偏差 \| Mip Bias | `3` | `-2`…`8`；绝对值覆盖镜内 `streamingMipmapBias`，越大纹理越糊、越省带宽。 |
-| 3. 镜内贴图与细节 · Scope Textures & Details | 镜内细节模式 \| Scope Detail Mode | `游戏默认` | 游戏默认 / 自定义。自定义时关闭镜内泛光、终极泛光、色散与鱼眼。 |
+| 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内泛光 \| Disable Scope Bloom | `false` | 勾选则关闭镜内相机的泛光（`bloomOptimized`）。 |
+| 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内终极泛光 \| Disable Scope Ultimate Bloom | `false` | 勾选则关闭镜内相机的终极泛光（`ultimateBloom`）。 |
+| 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内色散 \| Disable Scope Chromatic Aberration | `false` | 勾选则关闭镜内相机的色散（`chromaticAberration`）。 |
+| 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内鱼眼 \| Disable Scope Fisheye | `false` | 勾选则关闭镜内相机的鱼眼（`fisheye`）。 |
 
 ## 三种取值方式
 
@@ -43,20 +46,20 @@
 
 覆盖对象是镜内相机上由 `EFT.CameraControl.OpticComponentUpdater.CopyComponentFromOptic(OpticSight)` 按每瞄具 `ScopeEffectsData` 设置的组件开关；游戏**不会**每帧重写这些开关，因此插件在该方法的 postfix 里覆盖一次即可持久。
 
-「镜内细节模式」设为「自定义」时，插件关闭镜内相机的以下四个组件：
+四个开关各自独立：勾选即关闭对应组件，取消勾选则还原为该瞄具的授权值；全部不勾选时完全保持游戏行为。
 
-| 组件 | 含义 |
+| 开关 | 关闭的组件 |
 | --- | --- |
-| `chromaticAberration` | 色散 |
-| `bloomOptimized` | 泛光 |
-| `ultimateBloom` | 终极泛光 |
-| `fisheye` | 鱼眼 |
+| 关闭镜内泛光 | `bloomOptimized` |
+| 关闭镜内终极泛光 | `ultimateBloom` |
+| 关闭镜内色散 | `chromaticAberration` |
+| 关闭镜内鱼眼 | `fisheye` |
 
-应用时机：每次换镜（`CopyComponentFromOptic` 因瞄具实例变化而执行）时在其 postfix 覆盖，配置变更时也重新应用一次。刻意不暴露 `tonemapping`，因为关掉它会破坏镜内色彩与曝光。
+应用时机：每次换镜（`CopyComponentFromOptic` 因瞄具实例变化而执行）时在其 postfix 应用，配置变更时也重新应用一次。插件按瞄具实例缓存各开关的原始值，因此取消勾选能正确还原——游戏的 `cachedOpticId` 守卫会让同一瞄具重复进镜时跳过写入，若不按实例判断缓存，就会把我们关掉的值误当成原始值。刻意不暴露 `tonemapping`，因为关掉它会破坏镜内色彩与曝光。
 
 ### 为什么不提供体积光与散射
 
-`OpticComponentUpdater.LateUpdate()` **每帧**把主相机的 `volumetricLightRenderer.enabled` / `.Resolution`、`undithering.enabled`、`tod_Scattering`、`mboit_Scattering` 覆盖到镜内相机；要修改它们必须在每帧强制覆盖。本插件选择不做，因此只提供第一类的三项配置。
+`OpticComponentUpdater.LateUpdate()` **每帧**把主相机的 `volumetricLightRenderer.enabled` / `.Resolution`、`undithering.enabled`、`tod_Scattering`、`mboit_Scattering` 覆盖到镜内相机；要修改它们必须在每帧强制覆盖。本插件选择不做，因此只提供第一类的四个开关。
 
 ## 注意
 
@@ -83,7 +86,10 @@ The plugin ships no custom UI or hotkeys. Install [BepInEx ConfigurationManager]
 | 2. 镜内分辨率 · Scope Resolution | 瞄准中立即应用 \| Apply While Scoped | `true` | When off, changes made while scoped are deferred until you unscope. |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 镜内贴图 mip 模式 \| Scope Mip Mode | `游戏默认` | Game default / custom. Custom overrides the scope camera's texture mip bias. |
 | 3. 镜内贴图与细节 · Scope Textures & Details | Mip 偏差 \| Mip Bias | `3` | `-2`…`8`; an absolute override of the scope `streamingMipmapBias`; higher = blurrier textures and less bandwidth. |
-| 3. 镜内贴图与细节 · Scope Textures & Details | 镜内细节模式 \| Scope Detail Mode | `游戏默认` | Game default / custom. Custom disables in-scope bloom, ultimate bloom, chromatic aberration and fisheye. |
+| 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内泛光 \| Disable Scope Bloom | `false` | Check to disable the scope camera's bloom (`bloomOptimized`). |
+| 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内终极泛光 \| Disable Scope Ultimate Bloom | `false` | Check to disable the scope camera's ultimate bloom (`ultimateBloom`). |
+| 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内色散 \| Disable Scope Chromatic Aberration | `false` | Check to disable the scope camera's chromatic aberration (`chromaticAberration`). |
+| 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内鱼眼 \| Disable Scope Fisheye | `false` | Check to disable the scope camera's fisheye (`fisheye`). |
 
 ## The Three Resolution Modes
 
@@ -109,20 +115,20 @@ When "镜内贴图 mip 模式 | Scope Mip Mode" is set to "自定义" (custom), 
 
 What is overridden are the component toggles that `EFT.CameraControl.OpticComponentUpdater.CopyComponentFromOptic(OpticSight)` sets on the scope camera according to each optic's `ScopeEffectsData`; the game does **not** rewrite these toggles every frame, so the plugin overrides them once in that method's postfix and the result persists.
 
-When "镜内细节模式 | Scope Detail Mode" is set to "自定义" (custom), the plugin disables the following four components on the scope camera:
+The four toggles are independent: checking one disables the matching component, unchecking it restores that optic's authored value, and leaving all of them unchecked keeps the game behavior entirely.
 
-| Component | Meaning |
+| Toggle | Component disabled |
 | --- | --- |
-| `chromaticAberration` | chromatic aberration |
-| `bloomOptimized` | bloom |
-| `ultimateBloom` | ultimate bloom |
-| `fisheye` | fisheye |
+| 关闭镜内泛光 (disable bloom) | `bloomOptimized` |
+| 关闭镜内终极泛光 (disable ultimate bloom) | `ultimateBloom` |
+| 关闭镜内色散 (disable chromatic aberration) | `chromaticAberration` |
+| 关闭镜内鱼眼 (disable fisheye) | `fisheye` |
 
-When it applies: once per optic change (when `CopyComponentFromOptic` runs because the optic instance changed) in its postfix, and again on a config change. `tonemapping` is deliberately not exposed, because disabling it would break the in-scope color and exposure.
+When it applies: once per optic change (when `CopyComponentFromOptic` runs because the optic instance changed) in its postfix, and again on a config change. The plugin caches the original values per optic instance so that unchecking a toggle restores correctly — the game's `cachedOpticId` guard skips the writes when you re-enter with the same optic, and without an instance-keyed cache our disabled values would be mistaken for the originals. `tonemapping` is deliberately not exposed, because disabling it would break the in-scope color and exposure.
 
 ### Why Volumetric Light and Scattering Are Not Offered
 
-`OpticComponentUpdater.LateUpdate()` copies the main camera's `volumetricLightRenderer.enabled` / `.Resolution`, `undithering.enabled`, `tod_Scattering` and `mboit_Scattering` onto the scope camera **every frame**; changing them would require forcing an override every frame. This plugin chooses not to do so, and therefore offers only the three configs of the first kind.
+`OpticComponentUpdater.LateUpdate()` copies the main camera's `volumetricLightRenderer.enabled` / `.Resolution`, `undithering.enabled`, `tod_Scattering` and `mboit_Scattering` onto the scope camera **every frame**; changing them would require forcing an override every frame. This plugin chooses not to do so, and therefore offers only the four toggles of the first kind.
 
 ## Note
 

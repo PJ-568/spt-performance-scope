@@ -41,7 +41,13 @@ namespace PerformanceScope
 
         public static ConfigEntry<float> MipBias { get; private set; }
 
-        public static ConfigEntry<ScopeSettingMode> DetailMode { get; private set; }
+        public static ConfigEntry<bool> DisableBloom { get; private set; }
+
+        public static ConfigEntry<bool> DisableUltimateBloom { get; private set; }
+
+        public static ConfigEntry<bool> DisableChromaticAberration { get; private set; }
+
+        public static ConfigEntry<bool> DisableFisheye { get; private set; }
 
         /// <summary>
         /// 绑定全部配置项并立即落盘，生成带注释的初始配置文件。
@@ -137,14 +143,41 @@ namespace PerformanceScope
                     new AcceptableValueRange<float>(ScopeMipMath.MinBias, ScopeMipMath.MaxBias),
                     new ConfigurationManagerAttributes { Order = 2 }));
 
-            DetailMode = config.Bind(
+            DisableBloom = config.Bind(
                 SectionDetails,
-                "镜内细节模式 | Scope Detail Mode",
-                ScopeSettingMode.GameDefault,
+                "关闭镜内泛光 | Disable Scope Bloom",
+                false,
                 new ConfigDescription(
-                    "游戏默认 / 自定义。自定义时关闭镜内泛光、终极泛光、色散与鱼眼（一次性覆盖，不动体积光与散射）。\nGame default / custom. When custom, disables in-scope bloom, ultimate bloom, chromatic aberration and fisheye (a one-shot override; volumetric light and scattering are left alone).",
+                    "勾选后关闭镜内相机的泛光（bloomOptimized）。不勾选则保持游戏行为。\nCheck to disable the optic camera's bloom (bloomOptimized). Unchecked keeps the game default.",
                     null,
                     new ConfigurationManagerAttributes { Order = 3 }));
+
+            DisableUltimateBloom = config.Bind(
+                SectionDetails,
+                "关闭镜内终极泛光 | Disable Scope Ultimate Bloom",
+                false,
+                new ConfigDescription(
+                    "勾选后关闭镜内相机的终极泛光（ultimateBloom）。\nCheck to disable the optic camera's ultimate bloom (ultimateBloom).",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 4 }));
+
+            DisableChromaticAberration = config.Bind(
+                SectionDetails,
+                "关闭镜内色散 | Disable Scope Chromatic Aberration",
+                false,
+                new ConfigDescription(
+                    "勾选后关闭镜内相机的色散（chromaticAberration）。\nCheck to disable the optic camera's chromatic aberration (chromaticAberration).",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 5 }));
+
+            DisableFisheye = config.Bind(
+                SectionDetails,
+                "关闭镜内鱼眼 | Disable Scope Fisheye",
+                false,
+                new ConfigDescription(
+                    "勾选后关闭镜内相机的鱼眼（fisheye）。\nCheck to disable the optic camera's fisheye (fisheye).",
+                    null,
+                    new ConfigurationManagerAttributes { Order = 6 }));
 
             config.Save();
         }

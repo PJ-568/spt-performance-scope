@@ -82,11 +82,11 @@
 
 ### 镜内细节
 
-`EFT.CameraControl.OpticComponentUpdater.CopyComponentFromOptic(OpticSight)` 会按每瞄具的 `ScopeEffectsData` 设置镜内相机上的组件开关（`chromaticAberration`、`bloomOptimized`、`ultimateBloom`、`fisheye`、`cc_FastVignette`、`tonemapping` 等）。**这些不会被每帧覆盖**，所以插件用该方法的 postfix 覆盖一次即可持久。
+`EFT.CameraControl.OpticComponentUpdater.CopyComponentFromOptic(OpticSight)` 会按每瞄具的 `ScopeEffectsData` 设置镜内相机上的组件开关（`chromaticAberration`、`bloomOptimized`、`ultimateBloom`、`fisheye`、`cc_FastVignette`、`tonemapping` 等）。**这些不会被每帧覆盖**，所以插件用该方法的 postfix 覆盖一次即可持久。插件对其中四个提供**逐项开关**（泛光、终极泛光、色散、鱼眼），并按瞄具实例缓存原始值，使取消勾选能正确还原。
 
 ### 刻意不做体积光与散射
 
-`OpticComponentUpdater.LateUpdate()` **每帧**把主相机的 `volumetricLightRenderer.enabled` / `.Resolution`、`undithering.enabled`、`tod_Scattering`、`mboit_Scattering` 覆盖到镜内相机，要改它们必须每帧强制覆盖；本插件选择不做，只提供第一类的三项（外加不暴露 `tonemapping`，因为关掉它会破坏镜内色彩与曝光）。
+`OpticComponentUpdater.LateUpdate()` **每帧**把主相机的 `volumetricLightRenderer.enabled` / `.Resolution`、`undithering.enabled`、`tod_Scattering`、`mboit_Scattering` 覆盖到镜内相机，要改它们必须每帧强制覆盖；本插件选择不做，只为第一类提供四个开关（外加不暴露 `tonemapping`，因为关掉它会破坏镜内色彩与曝光）。
 
 新增的 Harmony 目标是 `OpticComponentUpdater.CopyComponentFromOptic`（postfix）；**不 patch** `LateUpdate` 或 `Awake`。
 
@@ -202,11 +202,11 @@ There are two write points for the in-scope texture mip and the in-scope details
 
 ### In-scope details
 
-`EFT.CameraControl.OpticComponentUpdater.CopyComponentFromOptic(OpticSight)` sets the component toggles on the scope camera according to each optic's `ScopeEffectsData` (`chromaticAberration`, `bloomOptimized`, `ultimateBloom`, `fisheye`, `cc_FastVignette`, `tonemapping`, etc.). **These are not overwritten every frame**, so the plugin overrides them once in that method's postfix and the result persists.
+`EFT.CameraControl.OpticComponentUpdater.CopyComponentFromOptic(OpticSight)` sets the component toggles on the scope camera according to each optic's `ScopeEffectsData` (`chromaticAberration`, `bloomOptimized`, `ultimateBloom`, `fisheye`, `cc_FastVignette`, `tonemapping`, etc.). **These are not overwritten every frame**, so the plugin overrides them once in that method's postfix and the result persists. The plugin exposes **individual toggles** for four of them (bloom, ultimate bloom, chromatic aberration, fisheye) and caches the original values per optic instance so that unchecking a toggle restores correctly.
 
 ### Volumetric light and scattering deliberately excluded
 
-`OpticComponentUpdater.LateUpdate()` copies the main camera's `volumetricLightRenderer.enabled` / `.Resolution`, `undithering.enabled`, `tod_Scattering` and `mboit_Scattering` onto the scope camera **every frame**; changing them would require forcing an override every frame. This plugin chooses not to do so and offers only the three of the first kind (and it does not expose `tonemapping`, because disabling it would break the in-scope color and exposure).
+`OpticComponentUpdater.LateUpdate()` copies the main camera's `volumetricLightRenderer.enabled` / `.Resolution`, `undithering.enabled`, `tod_Scattering` and `mboit_Scattering` onto the scope camera **every frame**; changing them would require forcing an override every frame. This plugin chooses not to do so and offers individual toggles only for the first kind (and it does not expose `tonemapping`, because disabling it would break the in-scope color and exposure).
 
 The new Harmony target is `OpticComponentUpdater.CopyComponentFromOptic` (postfix); it does **not** patch `LateUpdate` or `Awake`.
 
