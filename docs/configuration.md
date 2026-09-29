@@ -16,7 +16,7 @@
 | 2. 镜内分辨率 · Scope Resolution | 绝对像素 \| Absolute Pixels | `1024` | 镜内方形 RenderTexture 的边长。 |
 | 2. 镜内分辨率 · Scope Resolution | 瞄准中立即应用 \| Apply While Scoped | `true` | 关闭时，瞄准期间的改动推迟到退出镜内后应用。 |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 镜内贴图 mip 模式 \| Scope Mip Mode | `游戏默认` | 游戏默认 / 自定义。自定义时覆盖镜内相机的贴图 mip 偏差。 |
-| 3. 镜内贴图与细节 · Scope Textures & Details | Mip 偏差 \| Mip Bias | `3` | `-2`…`8`；绝对值覆盖镜内 `streamingMipmapBias`，越大纹理越糊、越省带宽。 |
+| 3. 镜内贴图与细节 · Scope Textures & Details | Mip 偏差 \| Mip Bias | `3` | `-2`…`8`；绝对值覆盖镜内 `streamingMipmapBias`，越大常驻 mip 越粗。 |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内泛光 \| Disable Scope Bloom | `false` | 勾选则关闭镜内相机的泛光（`bloomOptimized`）。 |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内终极泛光 \| Disable Scope Ultimate Bloom | `false` | 勾选则关闭镜内相机的终极泛光（`ultimateBloom`）。 |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内色散 \| Disable Scope Chromatic Aberration | `false` | 勾选则关闭镜内相机的色散（`chromaticAberration`）。 |
@@ -38,7 +38,16 @@
 
 覆盖对象是镜内相机自己的 `UnityEngine.StreamingController.streamingMipmapBias`。游戏在 `EFT.CameraControl.OpticCameraManager.Init()` 中把它设为 `GraphicsSettingsGroup.TextureQualityToMipBias(TextureQuality)`，即 `Clamp(2 − 贴图品质, 0, 2)`（`TextureQuality` 取 0–2，因此游戏默认值落在 0–2 之间）；全仓库只有这一处写镜内相机的该值，且不会每帧刷新。
 
-「镜内贴图 mip 模式」设为「自定义」时，插件按「Mip 偏差」的**绝对值**覆盖它，值越大纹理越糊、越省带宽。覆盖只在镜内相机创建时执行一次即可持久，无需每帧。
+「镜内贴图 mip 模式」设为「自定义」时，插件按「Mip 偏差」的**绝对值**覆盖它。
+
+这个值的语义需要说清楚：
+
+- 它**不参与 GPU 采样时的 LOD 计算**，只决定流送系统让哪些 mip **常驻**。正值让常驻集合更粗，采样因此被夹到更粗的顶层——这才是「看起来更糊」的成因；它省的是**上传与磁盘 I/O（以及可能的常驻显存）**，不是 GPU 采样带宽。
+- **只在开启贴图流送时生效**；关掉流送时游戏改用全局贴图上限，该偏差无任何作用。
+- **受 `streamingMipmapsMaxLevelReduction` 截断**：游戏把它设为 `4 − 贴图品质`，贴图品质为「高」时只有 2 级可丢，因此偏差大于 `2` 的部分通常不会带来额外效果；该项还**优先于内存预算**。
+- **常驻级别按所有启用相机中最精细的需求聚合**（游戏设了 `streamingMipmapsAddAllCameras = true`）。启用 DLSS/FSR 时主相机是 `−1.5`（更细），可能把纹理常驻「钉」在高分辨率上，此时镜内即使设正值也可能既省不到显存、也看不出变化。
+
+覆盖只在镜内相机创建时执行一次即可持久，无需每帧。
 
 > 注意：`streamingMipmapBias` 是绝对值覆盖，而非在游戏默认值上叠加偏移；想保持游戏行为就选「游戏默认」。
 
@@ -85,7 +94,7 @@ The plugin ships no custom UI or hotkeys. Install [BepInEx ConfigurationManager]
 | 2. 镜内分辨率 · Scope Resolution | 绝对像素 \| Absolute Pixels | `1024` | Edge length of the square scope RenderTexture. |
 | 2. 镜内分辨率 · Scope Resolution | 瞄准中立即应用 \| Apply While Scoped | `true` | When off, changes made while scoped are deferred until you unscope. |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 镜内贴图 mip 模式 \| Scope Mip Mode | `游戏默认` | Game default / custom. Custom overrides the scope camera's texture mip bias. |
-| 3. 镜内贴图与细节 · Scope Textures & Details | Mip 偏差 \| Mip Bias | `3` | `-2`…`8`; an absolute override of the scope `streamingMipmapBias`; higher = blurrier textures and less bandwidth. |
+| 3. 镜内贴图与细节 · Scope Textures & Details | Mip 偏差 \| Mip Bias | `3` | `-2`…`8`; an absolute override of the scope `streamingMipmapBias`; larger keeps coarser mips resident. |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内泛光 \| Disable Scope Bloom | `false` | Check to disable the scope camera's bloom (`bloomOptimized`). |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内终极泛光 \| Disable Scope Ultimate Bloom | `false` | Check to disable the scope camera's ultimate bloom (`ultimateBloom`). |
 | 3. 镜内贴图与细节 · Scope Textures & Details | 关闭镜内色散 \| Disable Scope Chromatic Aberration | `false` | Check to disable the scope camera's chromatic aberration (`chromaticAberration`). |
@@ -107,7 +116,16 @@ On by default. When on, changing the target value while scoped rebuilds the scop
 
 What is overridden is the scope camera's own `UnityEngine.StreamingController.streamingMipmapBias`. In `EFT.CameraControl.OpticCameraManager.Init()` the game sets it to `GraphicsSettingsGroup.TextureQualityToMipBias(TextureQuality)`, i.e. `Clamp(2 − texture quality, 0, 2)` (`TextureQuality` is 0–2, so the game default lands in the 0–2 range); this is the only place in the whole codebase that writes that value on the scope camera, and it is not refreshed every frame.
 
-When "镜内贴图 mip 模式 | Scope Mip Mode" is set to "自定义" (custom), the plugin overrides it with the **absolute value** of "Mip 偏差 | Mip Bias"; a higher value means blurrier textures and less bandwidth. The override is applied once when the scope camera is created and persists, so no per-frame work is needed.
+When "镜内贴图 mip 模式 | Scope Mip Mode" is set to "自定义" (custom), the plugin overrides it with the **absolute value** of "Mip 偏差 | Mip Bias".
+
+The semantics of that value need to be stated clearly:
+
+- It does **not** take part in the GPU sampling LOD calculation; it only decides which mips the streaming system keeps **resident**. A positive value makes the resident set coarser, so sampling is clamped to a coarser top level — that is what "looks blurrier" actually means. What it saves is **upload and disk I/O (and possibly resident VRAM)**, not GPU sampling bandwidth.
+- It **only applies while texture streaming is enabled**; with streaming off the game uses a global texture limit instead and this bias does nothing.
+- It is **truncated by `streamingMipmapsMaxLevelReduction`**: the game sets it to `4 − texture quality`, so at high texture quality only 2 levels can be dropped, and anything above `2` usually adds nothing; that setting also **takes priority over the memory budget**.
+- **Residency aggregates the finest demand across all enabled cameras** (the game sets `streamingMipmapsAddAllCameras = true`). With DLSS/FSR enabled the main camera runs at `−1.5` (finer), which may pin the texture residency to a high resolution, in which case a positive in-scope value may save neither memory nor visible quality.
+
+The override is applied once when the scope camera is created and persists, so no per-frame work is needed.
 
 > Note: `streamingMipmapBias` is an absolute override, not an offset added on top of the game default; pick "游戏默认" (game default) to keep the game behavior.
 

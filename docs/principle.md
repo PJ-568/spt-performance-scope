@@ -80,6 +80,8 @@
 
 `EFT.CameraControl.OpticCameraManager.Init()` 会把镜内相机自己的 `UnityEngine.StreamingController.streamingMipmapBias` 设为 `GraphicsSettingsGroup.TextureQualityToMipBias(TextureQuality)`，映射为 `Clamp(2 − 画质, 0, 2)`（`TextureQuality` 取 0–2）。全仓库只有这一处写镜内相机的该值。因此插件在镜内相机创建时覆盖一次即可持久，**不需要每帧**。
 
+该偏差只影响流送系统保留哪些 mip **常驻**（进而影响上传/磁盘 I/O 与可能的常驻显存），**不参与 GPU 采样 LOD 计算**；观感变糊是「常驻集合变粗后采样被迫夹取」的结果。它仅在开启贴图流送时生效，并受 `QualitySettings.streamingMipmapsMaxLevelReduction`（游戏设为 `4 − 贴图品质`）截断——贴图品质为高时最多只能丢 2 级。常驻级别还要按所有启用相机中最精细的需求聚合（游戏设了 `streamingMipmapsAddAllCameras = true`），因此主相机在开超分时的 `−1.5` 可能使镜内正偏差失效。
+
 ### 镜内细节
 
 `EFT.CameraControl.OpticComponentUpdater.CopyComponentFromOptic(OpticSight)` 会按每瞄具的 `ScopeEffectsData` 设置镜内相机上的组件开关（`chromaticAberration`、`bloomOptimized`、`ultimateBloom`、`fisheye`、`cc_FastVignette`、`tonemapping` 等）。**这些不会被每帧覆盖**，所以插件用该方法的 postfix 覆盖一次即可持久。插件对其中四个提供**逐项开关**（泛光、终极泛光、色散、鱼眼），并按瞄具实例缓存原始值，使取消勾选能正确还原。
@@ -199,6 +201,8 @@ There are two write points for the in-scope texture mip and the in-scope details
 ### Scope texture mip
 
 `EFT.CameraControl.OpticCameraManager.Init()` sets the scope camera's own `UnityEngine.StreamingController.streamingMipmapBias` to `GraphicsSettingsGroup.TextureQualityToMipBias(TextureQuality)`, which maps to `Clamp(2 − texture quality, 0, 2)` (`TextureQuality` is 0–2). This is the only place in the whole codebase that writes that value on the scope camera. The plugin therefore overrides it once when the scope camera is created, and it persists — **no per-frame work is needed**.
+
+The bias only affects which mips the streaming system keeps **resident** (hence upload/disk I/O and possibly resident VRAM); it does **not** take part in the GPU sampling LOD calculation. The blurrier look comes from the coarser resident set clamping sampling. It only applies while texture streaming is on, and it is truncated by `QualitySettings.streamingMipmapsMaxLevelReduction` (the game sets it to `4 − texture quality`), so at high texture quality at most 2 levels can be dropped. Residency also aggregates the finest demand across all enabled cameras (the game sets `streamingMipmapsAddAllCameras = true`), so the main camera's `−1.5` under an upscaler can make a positive in-scope bias ineffective.
 
 ### In-scope details
 

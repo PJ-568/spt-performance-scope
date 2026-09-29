@@ -139,7 +139,7 @@ namespace PerformanceScope
                 "Mip 偏差 | Mip Bias",
                 ScopeMipMath.DefaultCustomBias,
                 new ConfigDescription(
-                    "绝对值覆盖镜内相机的 streamingMipmapBias：越大纹理越糊、越省带宽；游戏默认值取决于贴图品质，范围为 0 到 2。\nAbsolute override for the optic camera's streamingMipmapBias: higher is blurrier and cheaper. The game default depends on texture quality and ranges from 0 to 2.",
+                    "绝对值覆盖镜内相机的 streamingMipmapBias：数值越大常驻 mip 越粗、越糊。它影响常驻 mip 与上传/磁盘 I/O，不影响 GPU 采样 LOD，且仅在开启贴图流送时生效。\nAbsolute override for the optic camera's streamingMipmapBias: a larger value keeps coarser mips resident and looks blurrier. It affects mip residency and upload/disk I/O, not the GPU sampling LOD, and only applies while texture streaming is on.",
                     new AcceptableValueRange<float>(ScopeMipMath.MinBias, ScopeMipMath.MaxBias),
                     new ConfigurationManagerAttributes { Order = 2 }));
 
